@@ -446,5 +446,215 @@ class AuditLogger:
             }
         )
 
+    @staticmethod
+    def log_reservation_create(
+        db: Session,
+        reservation,
+        custodian: str,
+        details: Optional[Dict[str, Any]] = None
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="RESERVATION",
+            entity_id=reservation.id,
+            action="CREATE",
+            custodian=custodian,
+            old_status=None,
+            new_status=reservation.status,
+            details=details or {
+                "reservation_no": reservation.reservation_no,
+                "site_code": reservation.site_code,
+                "customer_code": reservation.customer_code,
+                "vehicle_no": reservation.vehicle_no,
+                "box_count": len(reservation.reservation_boxes)
+            }
+        )
+
+    @staticmethod
+    def log_reservation_status_change(
+        db: Session,
+        reservation,
+        old_status: str,
+        new_status: str,
+        custodian: str,
+        action: str = "STATUS_CHANGE",
+        details: Optional[Dict[str, Any]] = None
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="RESERVATION",
+            entity_id=reservation.id,
+            action=action,
+            custodian=custodian,
+            old_status=old_status,
+            new_status=new_status,
+            details=details or {"reservation_no": reservation.reservation_no}
+        )
+
+    @staticmethod
+    def log_reservation_update(
+        db: Session,
+        reservation,
+        custodian: str,
+        changes: Dict[str, Any]
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="RESERVATION",
+            entity_id=reservation.id,
+            action="UPDATE",
+            custodian=custodian,
+            old_status=reservation.status,
+            new_status=reservation.status,
+            details={
+                "reservation_no": reservation.reservation_no,
+                "changes": changes
+            }
+        )
+
+    @staticmethod
+    def log_reservation_cancel(
+        db: Session,
+        reservation,
+        custodian: str,
+        cancel_reason: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="RESERVATION",
+            entity_id=reservation.id,
+            action="CANCEL",
+            custodian=custodian,
+            old_status=reservation.status,
+            new_status="CANCELLED",
+            details={
+                "reservation_no": reservation.reservation_no,
+                "cancel_reason": cancel_reason
+            }
+        )
+
+    @staticmethod
+    def log_loading_plan_create(
+        db: Session,
+        loading_plan,
+        custodian: str,
+        details: Optional[Dict[str, Any]] = None
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="LOADING_PLAN",
+            entity_id=loading_plan.id,
+            action="CREATE",
+            custodian=custodian,
+            old_status=None,
+            new_status=loading_plan.status,
+            details=details or {
+                "plan_no": loading_plan.plan_no,
+                "reservation_id": loading_plan.reservation_id,
+                "vehicle_no": loading_plan.vehicle_no,
+                "box_count": len(loading_plan.loading_plan_boxes)
+            }
+        )
+
+    @staticmethod
+    def log_loading_plan_status_change(
+        db: Session,
+        loading_plan,
+        old_status: str,
+        new_status: str,
+        custodian: str,
+        action: str = "STATUS_CHANGE",
+        details: Optional[Dict[str, Any]] = None
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="LOADING_PLAN",
+            entity_id=loading_plan.id,
+            action=action,
+            custodian=custodian,
+            old_status=old_status,
+            new_status=new_status,
+            details=details or {"plan_no": loading_plan.plan_no}
+        )
+
+    @staticmethod
+    def log_loading_plan_confirm(
+        db: Session,
+        loading_plan,
+        custodian: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="LOADING_PLAN",
+            entity_id=loading_plan.id,
+            action="CONFIRM",
+            custodian=custodian,
+            old_status=loading_plan.status,
+            new_status="CONFIRMED",
+            details={
+                "plan_no": loading_plan.plan_no,
+                "vehicle_no": loading_plan.vehicle_no
+            }
+        )
+
+    @staticmethod
+    def log_loading_plan_cancel(
+        db: Session,
+        loading_plan,
+        custodian: str,
+        cancel_reason: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="LOADING_PLAN",
+            entity_id=loading_plan.id,
+            action="CANCEL",
+            custodian=custodian,
+            old_status=loading_plan.status,
+            new_status="CANCELLED",
+            details={
+                "plan_no": loading_plan.plan_no,
+                "cancel_reason": cancel_reason
+            }
+        )
+
+    @staticmethod
+    def log_box_loaded(
+        db: Session,
+        loading_plan,
+        box_code: str,
+        custodian: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="LOADING_PLAN",
+            entity_id=loading_plan.id,
+            action="BOX_LOADED",
+            custodian=custodian,
+            old_status=loading_plan.status,
+            new_status=loading_plan.status,
+            details={
+                "plan_no": loading_plan.plan_no,
+                "box_code": box_code
+            }
+        )
+
+    @staticmethod
+    def log_reservation_batch_import(
+        db: Session,
+        import_summary: Dict[str, Any],
+        custodian: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="RESERVATION",
+            entity_id=0,
+            action="BATCH_IMPORT",
+            custodian=custodian,
+            old_status=None,
+            new_status=None,
+            details=import_summary
+        )
+
 
 audit_logger = AuditLogger()

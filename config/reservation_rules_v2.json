@@ -1,0 +1,191 @@
+{
+  "version": "res-v2.0",
+  "description": "预约出库和装车计划规则配置",
+  "sites": [
+    {
+      "code": "CP001",
+      "name": "门诊采血室",
+      "roles": [
+        "WAREHOUSE",
+        "CUSTOMER_SERVICE"
+      ]
+    },
+    {
+      "code": "CP002",
+      "name": "住院部采样点",
+      "roles": [
+        "WAREHOUSE",
+        "CUSTOMER_SERVICE"
+      ]
+    },
+    {
+      "code": "CP003",
+      "name": "急诊采样点",
+      "roles": [
+        "WAREHOUSE",
+        "CUSTOMER_SERVICE"
+      ]
+    },
+    {
+      "code": "TP001",
+      "name": "中心实验室",
+      "roles": [
+        "WAREHOUSE",
+        "CUSTOMER_SERVICE",
+        "LAB"
+      ]
+    },
+    {
+      "code": "TP002",
+      "name": "核酸检测中心",
+      "roles": [
+        "WAREHOUSE",
+        "CUSTOMER_SERVICE",
+        "LAB"
+      ]
+    }
+  ],
+  "customers": [
+    {
+      "code": "CUST001",
+      "name": "省人民医院"
+    },
+    {
+      "code": "CUST002",
+      "name": "市第一医院"
+    },
+    {
+      "code": "CUST003",
+      "name": "协和医院"
+    },
+    {
+      "code": "CUST004",
+      "name": "北医三院"
+    },
+    {
+      "code": "CUST005",
+      "name": "301医院"
+    }
+  ],
+  "temperature_zones": [
+    {
+      "code": "FROZEN",
+      "name": "冷冻(-20℃~-80℃)"
+    },
+    {
+      "code": "REFRIGERATED",
+      "name": "冷藏(2℃~8℃)"
+    },
+    {
+      "code": "AMBIENT",
+      "name": "常温(15℃~30℃)"
+    },
+    {
+      "code": "CRYOGENIC",
+      "name": "深冷(-150℃以下)"
+    }
+  ],
+  "vehicle_capacities": {
+    "default": 30,
+    "small": 10,
+    "large": 30
+  },
+  "reservation_rules": {
+    "advance_reservation_hours": 4,
+    "cancellation_limit_hours": 2,
+    "allow_mixed_temperature_zones": true
+  },
+  "status_flow": {
+    "reservation": {
+      "DRAFT": [
+        "CONFIRMED",
+        "CANCELLED"
+      ],
+      "CONFIRMED": [
+        "LOADING",
+        "CANCELLED"
+      ],
+      "LOADING": [
+        "LOADED"
+      ],
+      "LOADED": [],
+      "CANCELLED": []
+    },
+    "loading_plan": {
+      "DRAFT": [
+        "CONFIRMED",
+        "CANCELLED"
+      ],
+      "CONFIRMED": [],
+      "CANCELLED": []
+    }
+  },
+  "loading_statuses": [
+    "PENDING",
+    "LOADED"
+  ],
+  "role_site_permissions": {
+    "WAREHOUSE": [
+      "CP001",
+      "CP002",
+      "CP003",
+      "TP001",
+      "TP002"
+    ],
+    "CUSTOMER_SERVICE": [
+      "CP001",
+      "CP002",
+      "CP003",
+      "TP001",
+      "TP002"
+    ],
+    "LAB": [
+      "TP001",
+      "TP002"
+    ]
+  },
+  "users": {
+    "wh_user1": {
+      "role": "WAREHOUSE",
+      "sites": [
+        "CP001",
+        "TP001"
+      ]
+    },
+    "wh_user2": {
+      "role": "WAREHOUSE",
+      "sites": [
+        "CP002",
+        "CP003"
+      ]
+    },
+    "cs_user1": {
+      "role": "CUSTOMER_SERVICE",
+      "sites": [
+        "CP001",
+        "CP002",
+        "CP003",
+        "TP001",
+        "TP002"
+      ]
+    },
+    "lab_user1": {
+      "role": "LAB",
+      "sites": [
+        "TP001"
+      ]
+    },
+    "admin": {
+      "role": "WAREHOUSE",
+      "sites": [
+        "CP001",
+        "CP002",
+        "CP003",
+        "TP001",
+        "TP002"
+      ]
+    }
+  },
+  "reservation_no_prefix": "RES",
+  "loading_plan_no_prefix": "LP"
+}

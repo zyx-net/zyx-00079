@@ -1,0 +1,11 @@
+{
+  "reservation_no": "RES_20260606135631632",
+  "plan_no": "LP_20260606135635682",
+  "rule_version": "res-v2.0",
+  "config_version": null,
+  "export_file": "",
+  "logs_count_before": 1,
+  "status_before": "LOADED",
+  "has_snapshot_before": true,
+  "has_loading_plans_before": true
+}

@@ -365,3 +365,203 @@ class WorkOrderExportResponse(BaseModel):
     file_name: str
     total_count: int
     exported_at: datetime
+
+
+class ReservationBoxCreate(BaseModel):
+    box_code: str = Field(..., description="箱号")
+
+
+class ReservationBoxResponse(BaseModel):
+    id: int
+    reservation_id: int
+    box_id: int
+    box_code: str
+    loading_status: str
+    loaded_at: Optional[datetime]
+    loaded_by: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ReservationCreate(BaseModel):
+    site_code: str = Field(..., description="站点编码")
+    customer_code: str = Field(..., description="客户编码")
+    temperature_zone: str = Field(..., description="温控要求：FROZEN、REFRIGERATED、AMBIENT、CRYOGENIC")
+    vehicle_no: str = Field(..., description="车牌号")
+    vehicle_type: Optional[str] = Field(None, description="车辆类型：small、large、default")
+    scheduled_date: datetime = Field(..., description="预约出库时间")
+    box_codes: List[str] = Field(..., description="待出库箱号列表")
+    created_by: str = Field(..., description="创建人")
+    remark: Optional[str] = Field(None, description="备注")
+
+
+class ReservationUpdate(BaseModel):
+    site_code: Optional[str] = Field(None, description="站点编码")
+    customer_code: Optional[str] = Field(None, description="客户编码")
+    temperature_zone: Optional[str] = Field(None, description="温控要求")
+    vehicle_no: Optional[str] = Field(None, description="车牌号")
+    vehicle_type: Optional[str] = Field(None, description="车辆类型")
+    scheduled_date: Optional[datetime] = Field(None, description="预约出库时间")
+    box_codes: Optional[List[str]] = Field(None, description="待出库箱号列表")
+    remark: Optional[str] = Field(None, description="备注")
+    operator: str = Field(..., description="操作人")
+
+
+class ReservationResponse(BaseModel):
+    id: int
+    reservation_no: str
+    site_code: str
+    customer_code: str
+    temperature_zone: str
+    vehicle_no: str
+    vehicle_type: Optional[str]
+    scheduled_date: datetime
+    status: str
+    created_by: str
+    remark: Optional[str]
+    rule_version: str
+    cancelled_at: Optional[datetime]
+    cancelled_by: Optional[str]
+    cancel_reason: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+    reservation_boxes: List[ReservationBoxResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
+class ReservationCancelRequest(BaseModel):
+    reservation_no: str = Field(..., description="预约单号")
+    cancel_reason: str = Field(..., min_length=1, max_length=255, description="取消原因")
+    operator: str = Field(..., description="操作人")
+
+
+class ReservationConfirmRequest(BaseModel):
+    reservation_no: str = Field(..., description="预约单号")
+    operator: str = Field(..., description="操作人")
+
+
+class LoadingPlanBoxResponse(BaseModel):
+    id: int
+    loading_plan_id: int
+    reservation_box_id: int
+    box_id: int
+    box_code: str
+    loading_sequence: int
+    loaded: bool
+    loaded_at: Optional[datetime]
+    loaded_by: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class LoadingPlanCreate(BaseModel):
+    reservation_no: str = Field(..., description="关联预约单号")
+    vehicle_no: Optional[str] = Field(None, description="车牌号，默认使用预约中的车牌号")
+    driver: Optional[str] = Field(None, description="司机")
+    departure_time: Optional[datetime] = Field(None, description="预计发车时间")
+    operator: str = Field(..., description="操作人")
+    remark: Optional[str] = Field(None, description="备注")
+
+
+class LoadingPlanUpdate(BaseModel):
+    driver: Optional[str] = Field(None, description="司机")
+    departure_time: Optional[datetime] = Field(None, description="预计发车时间")
+    remark: Optional[str] = Field(None, description="备注")
+    box_sequences: Optional[Dict[str, int]] = Field(None, description="箱号到装车顺序的映射")
+    operator: str = Field(..., description="操作人")
+
+
+class LoadingPlanResponse(BaseModel):
+    id: int
+    plan_no: str
+    reservation_id: int
+    vehicle_no: str
+    driver: Optional[str]
+    departure_time: Optional[datetime]
+    status: str
+    confirmed_by: Optional[str]
+    confirmed_at: Optional[datetime]
+    cancelled_at: Optional[datetime]
+    cancelled_by: Optional[str]
+    cancel_reason: Optional[str]
+    remark: Optional[str]
+    rule_version: str
+    created_at: datetime
+    updated_at: datetime
+    loading_plan_boxes: List[LoadingPlanBoxResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
+class LoadingPlanConfirmRequest(BaseModel):
+    plan_no: str = Field(..., description="装车计划单号")
+    operator: str = Field(..., description="操作人")
+
+
+class LoadingPlanCancelRequest(BaseModel):
+    plan_no: str = Field(..., description="装车计划单号")
+    cancel_reason: str = Field(..., min_length=1, max_length=255, description="取消原因")
+    operator: str = Field(..., description="操作人")
+
+
+class LoadingPlanBoxLoadRequest(BaseModel):
+    plan_no: str = Field(..., description="装车计划单号")
+    box_code: str = Field(..., description="箱号")
+    operator: str = Field(..., description="操作人")
+
+
+class ReservationBatchImportItem(BaseModel):
+    site_code: str = Field(..., description="站点编码")
+    customer_code: str = Field(..., description="客户编码")
+    temperature_zone: str = Field(..., description="温控要求")
+    vehicle_no: str = Field(..., description="车牌号")
+    vehicle_type: Optional[str] = Field(None, description="车辆类型")
+    scheduled_date: datetime = Field(..., description="预约出库时间")
+    box_codes: List[str] = Field(..., description="待出库箱号列表")
+    created_by: str = Field(..., description="创建人")
+    remark: Optional[str] = Field(None, description="备注")
+
+
+class ReservationBatchImportRequest(BaseModel):
+    reservations: List[ReservationBatchImportItem] = Field(..., description="批量预约列表")
+    import_note: Optional[str] = Field(None, description="导入备注")
+
+
+class ReservationBatchImportError(BaseModel):
+    index: int
+    box_codes: List[str]
+    error: str
+    code: str
+    details: Optional[Dict[str, Any]] = None
+
+
+class ReservationBatchImportResponse(BaseModel):
+    success: bool
+    total_count: int
+    success_count: int
+    failed_count: int
+    imported_reservations: List[ReservationResponse]
+    errors: List[ReservationBatchImportError]
+    import_time: datetime
+    rule_version: str
+
+
+class LoadingPlanExportResponse(BaseModel):
+    file_path: str
+    file_name: str
+    total_count: int
+    exported_at: datetime
+
+
+class ReservationDetailResponse(ReservationResponse):
+    loading_plans: List[LoadingPlanResponse] = []
+    rule_snapshot: Optional[str] = None
+    transfer_records: List[TransferRecordResponse] = []
+    work_orders: List[WorkOrderResponse] = []

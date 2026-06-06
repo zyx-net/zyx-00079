@@ -7,10 +7,11 @@ import os
 import json
 
 from app.database import engine, Base, SessionLocal
-from app.models import ConfigVersion, WorkOrderRuleVersion
+from app.models import ConfigVersion, WorkOrderRuleVersion, ReservationRuleVersion
 from app.config_manager import config_manager, ConfigValidationError
 from app.work_order_config import work_order_config_manager, WorkOrderConfigValidationError
-from app.routes import samples, boxes, config, audit, work_orders
+from app.reservation_config import reservation_config_manager, ReservationConfigValidationError
+from app.routes import samples, boxes, config, audit, work_orders, reservations
 
 
 @asynccontextmanager
@@ -47,6 +48,21 @@ async def lifespan(app: FastAPI):
                 print(f"[STARTUP] 恢复工单规则配置失败: {e}")
         else:
             print("[STARTUP] 无活动工单规则配置，请通过API加载工单规则配置")
+
+        active_res_config = db.query(ReservationRuleVersion).filter(ReservationRuleVersion.is_active == True).first()
+        if active_res_config and os.path.exists(active_res_config.rule_file_path):
+            try:
+                with open(active_res_config.rule_file_path, 'r', encoding='utf-8') as f:
+                    res_config_content = f.read()
+                res_config_data = json.loads(res_config_content)
+                reservation_config_manager._current_config = res_config_data
+                reservation_config_manager._current_version = active_res_config.version
+                reservation_config_manager._config_file_path = active_res_config.rule_file_path
+                print(f"[STARTUP] 已恢复预约规则配置版本: {active_res_config.version}")
+            except Exception as e:
+                print(f"[STARTUP] 恢复预约规则配置失败: {e}")
+        else:
+            print("[STARTUP] 无活动预约规则配置，请通过API加载预约规则配置")
     finally:
         db.close()
 
@@ -124,11 +140,24 @@ async def work_order_config_validation_exception_handler(request: Request, exc: 
     )
 
 
+@app.exception_handler(ReservationConfigValidationError)
+async def reservation_config_validation_exception_handler(request: Request, exc: ReservationConfigValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={
+            "error": exc.message,
+            "code": exc.error_code,
+            "details": exc.details
+        }
+    )
+
+
 app.include_router(config.router)
 app.include_router(samples.router)
 app.include_router(boxes.router)
 app.include_router(audit.router)
 app.include_router(work_orders.router)
+app.include_router(reservations.router)
 
 
 @app.get("/", tags=["system"])
@@ -138,7 +167,9 @@ async def root():
         "version": "1.0.0",
         "status": "running",
         "docs": "/docs",
-        "config_version": config_manager.get_current_version() or "未加载"
+        "transfer_config_version": config_manager.get_current_version() or "未加载",
+        "work_order_config_version": work_order_config_manager.get_current_version() or "未加载",
+        "reservation_config_version": reservation_config_manager.get_current_version() or "未加载"
     }
 
 
@@ -147,8 +178,12 @@ async def health_check():
     return {
         "status": "healthy",
         "database": "connected",
-        "config_loaded": config_manager.get_current_version() is not None,
-        "config_version": config_manager.get_current_version()
+        "transfer_config_loaded": config_manager.get_current_version() is not None,
+        "transfer_config_version": config_manager.get_current_version(),
+        "work_order_config_loaded": work_order_config_manager.get_current_version() is not None,
+        "work_order_config_version": work_order_config_manager.get_current_version(),
+        "reservation_config_loaded": reservation_config_manager.get_current_version() is not None,
+        "reservation_config_version": reservation_config_manager.get_current_version()
     }
 
 
