@@ -1,0 +1,21 @@
+{
+  "version": "v1.1-bad",
+  "description": "坏配置样例：缺失blood样本的温度规则",
+  "temperature_rules": {
+    "saliva": {
+      "min_temp": 15.0,
+      "max_temp": 25.0,
+      "unit": "celsius"
+    }
+  },
+  "time_limit_rules": {
+    "blood": {
+      "max_hours_from_collection": 24,
+      "max_transfer_minutes": 120
+    }
+  },
+  "sample_types": ["blood", "saliva"],
+  "status_flow": {
+    "CREATED": ["BOXED"]
+  }
+}

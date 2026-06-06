@@ -1,0 +1,72 @@
+{
+  "version": "v1.0",
+  "description": "实验室样本转运温控与时限规则",
+  "temperature_rules": {
+    "blood": {
+      "min_temp": 2.0,
+      "max_temp": 8.0,
+      "unit": "celsius",
+      "description": "血液样本需保持2-8摄氏度冷藏"
+    },
+    "saliva": {
+      "min_temp": 15.0,
+      "max_temp": 25.0,
+      "unit": "celsius",
+      "description": "唾液样本需保持15-25摄氏度室温"
+    },
+    "nucleic_acid": {
+      "min_temp": -20.0,
+      "max_temp": -10.0,
+      "unit": "celsius",
+      "description": "核酸样本需保持-20至-10摄氏度冷冻"
+    },
+    "urine": {
+      "min_temp": 2.0,
+      "max_temp": 8.0,
+      "unit": "celsius",
+      "description": "尿液样本需保持2-8摄氏度冷藏"
+    }
+  },
+  "time_limit_rules": {
+    "blood": {
+      "max_hours_from_collection": 24,
+      "max_transfer_minutes": 120,
+      "description": "血液样本采集后24小时内必须送检，转运不超过2小时"
+    },
+    "saliva": {
+      "max_hours_from_collection": 72,
+      "max_transfer_minutes": 180,
+      "description": "唾液样本采集后72小时内必须送检，转运不超过3小时"
+    },
+    "nucleic_acid": {
+      "max_hours_from_collection": 48,
+      "max_transfer_minutes": 180,
+      "description": "核酸样本采集后48小时内必须送检，转运不超过3小时"
+    },
+    "urine": {
+      "max_hours_from_collection": 12,
+      "max_transfer_minutes": 60,
+      "description": "尿液样本采集后12小时内必须送检，转运不超过1小时"
+    }
+  },
+  "collection_points": [
+    {"code": "CP001", "name": "门诊采血室"},
+    {"code": "CP002", "name": "住院部采样点"},
+    {"code": "CP003", "name": "急诊采样点"}
+  ],
+  "testing_points": [
+    {"code": "TP001", "name": "中心实验室"},
+    {"code": "TP002", "name": "核酸检测中心"}
+  ],
+  "sample_types": ["blood", "saliva", "nucleic_acid", "urine"],
+  "status_flow": {
+    "CREATED": ["BOXED", "ISOLATED"],
+    "BOXED": ["IN_TRANSIT", "ISOLATED"],
+    "IN_TRANSIT": ["DELIVERED", "ISOLATED"],
+    "DELIVERED": ["TESTING", "ISOLATED"],
+    "TESTING": ["COMPLETED", "ISOLATED"],
+    "COMPLETED": ["ARCHIVED", "ISOLATED"],
+    "ISOLATED": [],
+    "ARCHIVED": []
+  }
+}

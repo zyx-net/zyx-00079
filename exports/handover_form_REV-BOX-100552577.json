@@ -1,0 +1,20 @@
+{
+  "box_code": "REV-BOX-100552577",
+  "transfer_id": 2,
+  "from_point": "CP001",
+  "to_point": "TP001",
+  "from_custodian": "alice",
+  "to_custodian": "bob",
+  "transfer_time": "2026-06-06 02:05:52.735841",
+  "samples": [
+    {
+      "barcode": "REV-BLD-100552577",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T01:55:52.637889",
+      "status": "ARCHIVED"
+    }
+  ],
+  "temperature": 5.0,
+  "rule_version": "v1.0"
+}

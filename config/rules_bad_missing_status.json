@@ -1,0 +1,18 @@
+{
+  "version": "v1.4-bad",
+  "description": "坏配置样例：缺失状态流转配置",
+  "temperature_rules": {
+    "blood": {
+      "min_temp": 2.0,
+      "max_temp": 8.0,
+      "unit": "celsius"
+    }
+  },
+  "time_limit_rules": {
+    "blood": {
+      "max_hours_from_collection": 24,
+      "max_transfer_minutes": 120
+    }
+  },
+  "sample_types": ["blood", "saliva"]
+}

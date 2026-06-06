@@ -1,0 +1,27 @@
+{
+  "version": "v1.3-bad",
+  "description": "坏配置样例：温度范围无效，min_temp > max_temp",
+  "temperature_rules": {
+    "blood": {
+      "min_temp": 10.0,
+      "max_temp": 2.0,
+      "unit": "celsius",
+      "description": "血液样本温度范围错误，最小值大于最大值"
+    },
+    "saliva": {
+      "min_temp": 15.0,
+      "max_temp": 25.0,
+      "unit": "celsius"
+    }
+  },
+  "time_limit_rules": {
+    "blood": {
+      "max_hours_from_collection": 24,
+      "max_transfer_minutes": 120
+    }
+  },
+  "sample_types": ["blood", "saliva"],
+  "status_flow": {
+    "CREATED": ["BOXED"]
+  }
+}
