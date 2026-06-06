@@ -484,6 +484,7 @@ def accept_box(request: AcceptanceRequest, db: Session = Depends(get_db)):
     - `BOX_NOT_FOUND`: 转运箱不存在
     - `BOX_NOT_IN_TRANSIT`: 转运箱不在运输中
     - `INVALID_CUSTODIAN`: 验收人不是当前保管人
+    - `SAMPLE_ISOLATED`: 箱内有已隔离样本，不能继续流转
     - `TIME_LIMIT_VIOLATION`: 超出时限
     - `INVALID_TEMPERATURE_FORMAT`: 温度记录格式错误
     """
@@ -515,6 +516,17 @@ def accept_box(request: AcceptanceRequest, db: Session = Depends(get_db)):
                 "code": "INVALID_CUSTODIAN"
             }
         )
+
+    for sample in box.samples:
+        if sample.is_isolated or sample.status == "ISOLATED":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "error": f"箱内样本 {sample.barcode} 已隔离，不能继续流转验收",
+                    "code": "SAMPLE_ISOLATED",
+                    "details": {"barcode": sample.barcode, "isolation_reason": sample.isolation_reason}
+                }
+            )
 
     if request.temperature_records:
         sample_type = box.samples[0].sample_type if box.samples else "blood"

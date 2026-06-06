@@ -5,27 +5,27 @@
   "to_point": "TP001",
   "from_custodian": "Dr. Zhang",
   "to_custodian": "Dr. Li",
-  "transfer_time": "2026-06-06 01:57:56.261835",
+  "transfer_time": "2026-06-06 03:09:19.129566",
   "samples": [
     {
       "barcode": "BLD-2026-0001",
       "sample_type": "blood",
       "collection_point": "CP001",
-      "collection_time": "2026-06-06T09:57:55",
+      "collection_time": "2026-06-06T11:09:18",
       "status": "ARCHIVED"
     },
     {
       "barcode": "BLD-2026-0002",
       "sample_type": "blood",
       "collection_point": "CP001",
-      "collection_time": "2026-06-06T09:57:55",
+      "collection_time": "2026-06-06T11:09:18",
       "status": "ARCHIVED"
     },
     {
       "barcode": "BLD-2026-0003",
       "sample_type": "blood",
       "collection_point": "CP001",
-      "collection_time": "2026-06-06T09:57:55",
+      "collection_time": "2026-06-06T11:09:18",
       "status": "ARCHIVED"
     }
   ],
