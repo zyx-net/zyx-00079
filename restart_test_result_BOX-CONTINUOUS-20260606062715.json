@@ -1,0 +1,10 @@
+{
+  "box_code": "BOX-CONTINUOUS-20260606062715",
+  "restart_time": "2026-06-06T06:29:18.980579+00:00",
+  "box_status_before": "DELIVERED",
+  "box_status_after": "DELIVERED",
+  "history_count_before": 3,
+  "history_count_after": 3,
+  "revoked_count": 2,
+  "all_passed": true
+}

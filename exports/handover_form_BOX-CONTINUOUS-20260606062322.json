@@ -1,0 +1,59 @@
+{
+  "box_code": "BOX-CONTINUOUS-20260606062322",
+  "transfer_id": 44,
+  "from_point": "CP001",
+  "to_point": "TP003",
+  "from_custodian": "Dr. Zhang",
+  "to_custodian": "Dr. Cust3",
+  "transfer_time": "2026-06-06 06:23:42.755195",
+  "samples": [
+    {
+      "barcode": "SAMP-REV-REG-20260606062322-0",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T06:23:22.582952",
+      "status": "DELIVERED"
+    },
+    {
+      "barcode": "SAMP-REV-REG-20260606062324-1",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T06:23:24.597178",
+      "status": "DELIVERED"
+    }
+  ],
+  "temperature": 4.8,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 43,
+      "from_point": "CP001",
+      "to_point": "TP002",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Cust2",
+      "transfer_time": "2026-06-06T06:23:38.717001",
+      "temperature": 4.8,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T06:23:40.736998",
+      "revoked_by": "Dr. Cust2",
+      "revoke_reason": "第2次撤回测试"
+    },
+    {
+      "transfer_id": 42,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Cust1",
+      "transfer_time": "2026-06-06T06:23:34.679098",
+      "temperature": 4.8,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T06:23:36.698118",
+      "revoked_by": "Dr. Cust1",
+      "revoke_reason": "第1次撤回测试"
+    }
+  ]
+}

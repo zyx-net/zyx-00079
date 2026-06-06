@@ -1,0 +1,190 @@
+{
+  "test_time": "2026-06-06T06:29:18.986399+00:00",
+  "main_box_code": "BOX-CONTINUOUS-20260606062715",
+  "total_tests": 36,
+  "passed": 36,
+  "failed": 0,
+  "all_passed": true,
+  "results": [
+    {
+      "test_name": "6.1 连续撤回后历史记录完整",
+      "passed": true,
+      "details": "共3条，已撤回2条，活跃1条"
+    },
+    {
+      "test_name": "6.2 最后一次交接 from_point 正确",
+      "passed": true,
+      "details": "from_point=TP002, 预期=TP002"
+    },
+    {
+      "test_name": "6.3 当前保管人正确",
+      "passed": true,
+      "details": "custodian=Dr. Cust3, 预期=Dr. Cust3"
+    },
+    {
+      "test_name": "6.4 多次撤回后验收成功",
+      "passed": true,
+      "details": "status=DELIVERED"
+    },
+    {
+      "test_name": "1.1 交接单包含撤回历史",
+      "passed": true,
+      "details": "撤回历史 2 条"
+    },
+    {
+      "test_name": "1.2 交接单当前交接 is_revoked=False",
+      "passed": true,
+      "details": "is_revoked=False"
+    },
+    {
+      "test_name": "1.3 交接单 from_point 正确（基于最近交接）",
+      "passed": true,
+      "details": "from_point=TP002, 预期=TP002"
+    },
+    {
+      "test_name": "1.4 异常清单包含 TRANSFER_REVOKED 异常",
+      "passed": true,
+      "details": "TRANSFER_REVOKED 异常 2 条"
+    },
+    {
+      "test_name": "1.5 异常清单包含撤回历史",
+      "passed": true,
+      "details": "revoked_transfer_history 存在=True"
+    },
+    {
+      "test_name": "2.1 审计日志覆盖所有实体类型",
+      "passed": true,
+      "details": "TRANSFER=27, BOX=27, SAMPLE=46"
+    },
+    {
+      "test_name": "2.2 撤回日志包含规则版本",
+      "passed": true,
+      "details": "details包含rule_version=True"
+    },
+    {
+      "test_name": "2.3 撤回日志包含前后保管人",
+      "passed": true,
+      "details": "details包含old_custodian和new_custodian=True"
+    },
+    {
+      "test_name": "2.4 重新交接日志存在",
+      "passed": true,
+      "details": "RE_TRANSFER 日志 2 条"
+    },
+    {
+      "test_name": "2.5 重新交接日志包含关联信息",
+      "passed": true,
+      "details": "prev_transfer_id=True, revoked_count_before=True"
+    },
+    {
+      "test_name": "2.6 按箱号查询审计日志正常",
+      "passed": true,
+      "details": "箱BOX-CONTINUOUS-20260606062715审计日志 8 条"
+    },
+    {
+      "test_name": "2.7 按样本条码查询审计日志正常",
+      "passed": true,
+      "details": "样本SAMP-REV-REG-20260606062715-0审计日志 9 条"
+    },
+    {
+      "test_name": "5.1 第一次交接 from_point 是采集点",
+      "passed": true,
+      "details": "from_point=CP001, 预期=CP001"
+    },
+    {
+      "test_name": "5.2 撤回后重新交接 from_point 是上一次有效交接的 to_point",
+      "passed": true,
+      "details": "from_point=TP001, 预期=TP001"
+    },
+    {
+      "test_name": "5.3 交接单导出 from_point 正确",
+      "passed": true,
+      "details": "from_point=TP001, 预期=TP001"
+    },
+    {
+      "test_name": "4.1 非保管人撤回返回 INVALID_CUSTODIAN",
+      "passed": true,
+      "details": "HTTP 400, code=INVALID_CUSTODIAN"
+    },
+    {
+      "test_name": "4.2 验收后撤回返回 BOX_INVALID_STATUS",
+      "passed": true,
+      "details": "HTTP 409, code=BOX_INVALID_STATUS, custodian=Dr. Cust3"
+    },
+    {
+      "test_name": "4.3 不存在的箱子返回 BOX_NOT_FOUND",
+      "passed": true,
+      "details": "HTTP 404, code=BOX_NOT_FOUND"
+    },
+    {
+      "test_name": "4.4 无交接记录返回 NO_TRANSFER_RECORD",
+      "passed": true,
+      "details": "HTTP 404, code=NO_TRANSFER_RECORD"
+    },
+    {
+      "test_name": "4.5.1 第一次撤回成功",
+      "passed": true,
+      "details": "HTTP 200"
+    },
+    {
+      "test_name": "4.5.2 重复撤回返回正确冲突错误码",
+      "passed": true,
+      "details": "HTTP 409, code=TRANSFER_ALREADY_REVOKED"
+    },
+    {
+      "test_name": "4.5.3 所有交接记录状态正确",
+      "passed": true,
+      "details": "所有记录已撤回=True"
+    },
+    {
+      "test_name": "4.5.4 所有记录已撤回后返回 TRANSFER_ALREADY_REVOKED",
+      "passed": true,
+      "details": "HTTP 409, code=TRANSFER_ALREADY_REVOKED"
+    },
+    {
+      "test_name": "4.6 CONCURRENT_CONFLICT 在 OpenAPI 文档中",
+      "passed": true,
+      "details": "409描述包含CONCURRENT_CONFLICT=True"
+    },
+    {
+      "test_name": "3.1 重启后箱子状态正确",
+      "passed": true,
+      "details": "status=DELIVERED, custodian=Dr. Cust3"
+    },
+    {
+      "test_name": "3.2 重启后交接历史完整",
+      "passed": true,
+      "details": "重启前3条，重启后3条"
+    },
+    {
+      "test_name": "3.3 重启后撤回记录保留",
+      "passed": true,
+      "details": "已撤回记录 2 条"
+    },
+    {
+      "test_name": "3.4 撤回记录字段完整",
+      "passed": true,
+      "details": "revoked_by、revoke_reason、revoked_at 均存在"
+    },
+    {
+      "test_name": "3.5 重启后已验收箱子撤回返回 BOX_INVALID_STATUS",
+      "passed": true,
+      "details": "HTTP 409, code=BOX_INVALID_STATUS, custodian=Dr. Cust3"
+    },
+    {
+      "test_name": "3.6 重启后交接单导出正常",
+      "passed": true,
+      "details": "HTTP 200"
+    },
+    {
+      "test_name": "3.7 重启后异常清单导出正常",
+      "passed": true,
+      "details": "HTTP 200"
+    },
+    {
+      "test_name": "3.8 重启后审计日志持久化",
+      "passed": true,
+      "details": "撤回审计日志 100 条"
+    }
+  ]
+}

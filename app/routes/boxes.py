@@ -338,7 +338,7 @@ def transfer_box(request: TransferRequest, db: Session = Depends(get_db)):
     - `INVALID_TEMPERATURE_FORMAT`: 温度记录格式错误
     - `TEMPERATURE_VIOLATION`: 温度超出范围
     """
-    box = db.query(Box).filter(Box.box_code == request.box_code).first()
+    box = db.query(Box).filter(Box.box_code == request.box_code).with_for_update().first()
     if not box:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -414,7 +414,21 @@ def transfer_box(request: TransferRequest, db: Session = Depends(get_db)):
                 }
             )
 
-    from_point = box.samples[0].collection_point if box.samples else "UNKNOWN"
+    all_transfers = db.query(TransferRecord).filter(
+        TransferRecord.box_id == box.id
+    ).order_by(TransferRecord.transfer_time.desc()).all()
+
+    last_any_transfer = all_transfers[0] if all_transfers else None
+    last_active_transfer = None
+    for t in all_transfers:
+        if not t.is_revoked:
+            last_active_transfer = t
+            break
+
+    if last_any_transfer:
+        from_point = last_any_transfer.to_point
+    else:
+        from_point = box.samples[0].collection_point if box.samples else "UNKNOWN"
 
     transfer = TransferRecord(
         box_id=box.id,
@@ -446,6 +460,15 @@ def transfer_box(request: TransferRequest, db: Session = Depends(get_db)):
         db, box, old_box_status, "IN_TRANSIT", request.to_custodian, "TRANSFER"
     )
     audit_logger.log_transfer(db, transfer, request.from_custodian)
+
+    if any(t.is_revoked for t in all_transfers):
+        revoked_count = len([t for t in all_transfers if t.is_revoked])
+        prev_id = last_any_transfer.id if last_any_transfer else None
+        audit_logger.log_re_transfer(
+            db, transfer, request.from_custodian,
+            prev_transfer_id=prev_id,
+            revoked_count=revoked_count
+        )
 
     db.commit()
     db.refresh(transfer)
@@ -491,7 +514,7 @@ def accept_box(request: AcceptanceRequest, db: Session = Depends(get_db)):
     - `TIME_LIMIT_VIOLATION`: 超出时限
     - `INVALID_TEMPERATURE_FORMAT`: 温度记录格式错误
     """
-    box = db.query(Box).filter(Box.box_code == request.box_code).first()
+    box = db.query(Box).filter(Box.box_code == request.box_code).with_for_update().first()
     if not box:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -548,9 +571,15 @@ def accept_box(request: AcceptanceRequest, db: Session = Depends(get_db)):
         box.temperature_records = request.temperature_records
 
     if request.check_duration:
-        last_transfer = db.query(TransferRecord).filter(
+        all_transfers = db.query(TransferRecord).filter(
             TransferRecord.box_id == box.id
-        ).order_by(TransferRecord.transfer_time.desc()).first()
+        ).order_by(TransferRecord.transfer_time.desc()).all()
+
+        last_transfer = None
+        for t in all_transfers:
+            if not t.is_revoked:
+                last_transfer = t
+                break
 
         if last_transfer:
             duration_minutes = int((datetime.utcnow() - last_transfer.transfer_time).total_seconds() / 60)
@@ -604,7 +633,7 @@ def accept_box(request: AcceptanceRequest, db: Session = Depends(get_db)):
     responses={
         400: {"model": ErrorResponse, "description": "请求错误或权限不足（INVALID_CUSTODIAN）"},
         404: {"model": ErrorResponse, "description": "箱不存在或无交接记录（BOX_NOT_FOUND、NO_TRANSFER_RECORD）"},
-        409: {"model": ErrorResponse, "description": "状态冲突，无法撤回（BOX_INVALID_STATUS、TRANSFER_ALREADY_REVOKED、SAMPLE_INVALID_STATUS、SAMPLE_ISOLATED）"}
+        409: {"model": ErrorResponse, "description": "状态冲突，无法撤回（BOX_INVALID_STATUS、TRANSFER_ALREADY_REVOKED、CONCURRENT_CONFLICT、SAMPLE_INVALID_STATUS、SAMPLE_ISOLATED）"}
     },
     summary="撤回交接记录"
 )
@@ -628,10 +657,11 @@ def revoke_transfer(request: TransferRevokeRequest, db: Session = Depends(get_db
     - `BOX_INVALID_STATUS`: 箱子状态不允许撤回
     - `NO_TRANSFER_RECORD`: 没有可撤回的交接记录
     - `TRANSFER_ALREADY_REVOKED`: 最近一条交接记录已被撤回
+    - `CONCURRENT_CONFLICT`: 并发冲突，该交接记录已被其他请求撤回
     - `SAMPLE_INVALID_STATUS`: 箱内样本状态不允许撤回
     - `SAMPLE_ISOLATED`: 箱内有已隔离样本
     """
-    box = db.query(Box).filter(Box.box_code == request.box_code).first()
+    box = db.query(Box).filter(Box.box_code == request.box_code).with_for_update().first()
     if not box:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -677,14 +707,29 @@ def revoke_transfer(request: TransferRevokeRequest, db: Session = Depends(get_db
             }
         )
 
-    last_transfer = all_transfers[0]
+    last_transfer = None
+    for t in all_transfers:
+        if not t.is_revoked:
+            last_transfer = t
+            break
 
+    if last_transfer is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": "所有交接记录已被撤回，没有可撤回的有效交接",
+                "code": "TRANSFER_ALREADY_REVOKED",
+                "details": {"total_transfers": len(all_transfers)}
+            }
+        )
+
+    db.refresh(last_transfer, with_for_update=True)
     if last_transfer.is_revoked:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
-                "error": "最近一条交接记录已被撤回，无需重复操作",
-                "code": "TRANSFER_ALREADY_REVOKED",
+                "error": "该交接记录已被其他请求撤回，请刷新后重试",
+                "code": "CONCURRENT_CONFLICT",
                 "details": {"transfer_id": last_transfer.id}
             }
         )
@@ -898,21 +943,44 @@ def get_handover_form(box_code: str, db: Session = Depends(get_db)):
             "status": sample.status
         })
 
+    if transfer:
+        form_from_point = transfer.from_point
+        form_to_point = transfer.to_point
+        form_from_custodian = transfer.from_custodian
+        form_to_custodian = transfer.to_custodian
+        form_transfer_time = transfer.transfer_time
+        form_temperature = transfer.temperature
+        form_is_revoked = transfer.is_revoked
+        form_revoked_at = transfer.revoked_at
+        form_revoked_by = transfer.revoked_by
+        form_revoke_reason = transfer.revoke_reason
+    else:
+        form_from_point = box.samples[0].collection_point if box.samples else "UNKNOWN"
+        form_to_point = box.destination
+        form_from_custodian = box.current_custodian
+        form_to_custodian = box.current_custodian
+        form_transfer_time = datetime.now(timezone.utc)
+        form_temperature = None
+        form_is_revoked = None
+        form_revoked_at = None
+        form_revoked_by = None
+        form_revoke_reason = None
+
     form = HandoverFormResponse(
         box_code=box.box_code,
         transfer_id=transfer.id if transfer else 0,
-        from_point=transfer.from_point if transfer else box.samples[0].collection_point if box.samples else "UNKNOWN",
-        to_point=transfer.to_point if transfer else box.destination,
-        from_custodian=transfer.from_custodian if transfer else box.current_custodian,
-        to_custodian=transfer.to_custodian if transfer else box.current_custodian,
-        transfer_time=transfer.transfer_time if transfer else datetime.now(timezone.utc),
+        from_point=form_from_point,
+        to_point=form_to_point,
+        from_custodian=form_from_custodian,
+        to_custodian=form_to_custodian,
+        transfer_time=form_transfer_time,
         samples=samples,
-        temperature=transfer.temperature if transfer else None,
+        temperature=form_temperature,
         rule_version=box.rule_version,
-        is_revoked=transfer.is_revoked if transfer else None,
-        revoked_at=transfer.revoked_at if transfer else None,
-        revoked_by=transfer.revoked_by if transfer else None,
-        revoke_reason=transfer.revoke_reason if transfer else None,
+        is_revoked=form_is_revoked,
+        revoked_at=form_revoked_at,
+        revoked_by=form_revoked_by,
+        revoke_reason=form_revoke_reason,
         revoked_transfer_history=revoked_history if revoked_history else None
     )
 

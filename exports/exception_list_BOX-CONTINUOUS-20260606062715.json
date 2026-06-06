@@ -1,0 +1,51 @@
+{
+  "box_code": "BOX-CONTINUOUS-20260606062715",
+  "exceptions": [
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 49,
+      "revoked_at": "2026-06-06T06:27:33.941751",
+      "revoked_by": "Dr. Cust2",
+      "revoke_reason": "第2次撤回测试",
+      "message": "交接记录已被撤回: 第2次撤回测试"
+    },
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 48,
+      "revoked_at": "2026-06-06T06:27:29.887244",
+      "revoked_by": "Dr. Cust1",
+      "revoke_reason": "第1次撤回测试",
+      "message": "交接记录已被撤回: 第1次撤回测试"
+    }
+  ],
+  "generated_at": "2026-06-06 06:29:16.968074+00:00",
+  "total_exceptions": 2,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 49,
+      "from_point": "TP001",
+      "to_point": "TP002",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Cust2",
+      "transfer_time": "2026-06-06T06:27:31.918688",
+      "temperature": 4.8,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T06:27:33.941751",
+      "revoked_by": "Dr. Cust2",
+      "revoke_reason": "第2次撤回测试"
+    },
+    {
+      "transfer_id": 48,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Cust1",
+      "transfer_time": "2026-06-06T06:27:27.863368",
+      "temperature": 4.8,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T06:27:29.887244",
+      "revoked_by": "Dr. Cust1",
+      "revoke_reason": "第1次撤回测试"
+    }
+  ]
+}

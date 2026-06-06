@@ -1,0 +1,61 @@
+{
+  "box_code": "BOX-E2E-FINAL-20260606143503",
+  "exceptions": [
+    {
+      "type": "TIME_LIMIT_VIOLATION",
+      "barcode": "SAMP-E2E-20260606143503-0",
+      "message": "已过 21284.6 小时，超出采集后 24 小时时限"
+    },
+    {
+      "type": "TIME_LIMIT_VIOLATION",
+      "barcode": "SAMP-E2E-20260606143503-1",
+      "message": "已过 21284.6 小时，超出采集后 24 小时时限"
+    },
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 58,
+      "revoked_at": "2026-06-06T06:35:26.192013",
+      "revoked_by": "Dr. Wang",
+      "revoke_reason": "运输温度超标",
+      "message": "交接记录已被撤回: 运输温度超标"
+    },
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 57,
+      "revoked_at": "2026-06-06T06:35:18.126881",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "样本信息有误",
+      "message": "交接记录已被撤回: 样本信息有误"
+    }
+  ],
+  "generated_at": "2026-06-06 06:35:36.291620+00:00",
+  "total_exceptions": 4,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 58,
+      "from_point": "TP001",
+      "to_point": "TP002",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Wang",
+      "transfer_time": "2026-06-06T06:35:22.157128",
+      "temperature": 4.5,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T06:35:26.192013",
+      "revoked_by": "Dr. Wang",
+      "revoke_reason": "运输温度超标"
+    },
+    {
+      "transfer_id": 57,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T06:35:16.103624",
+      "temperature": 4.0,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T06:35:18.126881",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "样本信息有误"
+    }
+  ]
+}

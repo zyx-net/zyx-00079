@@ -197,7 +197,37 @@ class AuditLogger:
                 "to_custodian": transfer.to_custodian,
                 "from_point": transfer.from_point,
                 "to_point": transfer.to_point,
+                "rule_version": transfer.rule_version,
                 "revoke_reason": reason
+            }
+        )
+
+    @staticmethod
+    def log_re_transfer(
+        db: Session,
+        transfer: TransferRecord,
+        custodian: str,
+        prev_transfer_id: int,
+        revoked_count: int
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="TRANSFER",
+            entity_id=transfer.id,
+            action="RE_TRANSFER",
+            custodian=custodian,
+            old_status=None,
+            new_status=transfer.status,
+            details={
+                "transfer_id": transfer.id,
+                "prev_transfer_id": prev_transfer_id,
+                "box_id": transfer.box_id,
+                "from_custodian": transfer.from_custodian,
+                "to_custodian": transfer.to_custodian,
+                "from_point": transfer.from_point,
+                "to_point": transfer.to_point,
+                "rule_version": transfer.rule_version,
+                "revoked_count_before": revoked_count
             }
         )
 
@@ -226,6 +256,7 @@ class AuditLogger:
                 "revoked_transfer_id": revoked_transfer_id,
                 "old_custodian": old_custodian,
                 "new_custodian": new_custodian,
+                "rule_version": box.rule_version,
                 "revoke_reason": reason
             }
         )
@@ -255,6 +286,7 @@ class AuditLogger:
                 "revoked_transfer_id": revoked_transfer_id,
                 "old_custodian": old_custodian,
                 "new_custodian": new_custodian,
+                "rule_version": sample.rule_version,
                 "revoke_reason": reason
             }
         )
