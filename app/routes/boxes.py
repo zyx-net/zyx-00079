@@ -10,6 +10,9 @@ from ..schemas import (
     BoxPackRequest,
     TransferRequest,
     TransferResponse,
+    TransferRecordResponse,
+    TransferRevokeRequest,
+    TransferRevokeResponse,
     AcceptanceRequest,
     HandoverFormResponse,
     ExceptionListResponse,
@@ -596,6 +599,192 @@ def accept_box(request: AcceptanceRequest, db: Session = Depends(get_db)):
 
 
 @router.post(
+    "/revoke-transfer",
+    response_model=TransferRevokeResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "请求错误或权限不足"},
+        404: {"model": ErrorResponse, "description": "箱不存在或无交接记录"},
+        409: {"model": ErrorResponse, "description": "状态冲突，无法撤回"}
+    },
+    summary="撤回交接记录"
+)
+def revoke_transfer(request: TransferRevokeRequest, db: Session = Depends(get_db)):
+    """
+    撤回最近一条交接记录，将箱子和箱内样本恢复到可重新交接的状态。
+
+    - **box_code**: 箱号
+    - **custodian**: 操作人（必须是当前保管人）
+    - **reason**: 撤回原因
+
+    限制条件：
+    - 只有 SEALED 或 IN_TRANSIT 状态的箱子可以撤回
+    - 已经到站验收(DELIVERED)、隔离(ISOLATED)、检测(TESTING/COMPLETED)或归档(ARCHIVED)的记录不能撤回
+    - 箱内所有样本状态必须允许撤回
+    - 不能重复撤回同一条交接记录
+
+    错误码：
+    - `BOX_NOT_FOUND`: 转运箱不存在
+    - `INVALID_CUSTODIAN`: 非当前保管人操作
+    - `BOX_INVALID_STATUS`: 箱子状态不允许撤回
+    - `NO_TRANSFER_RECORD`: 没有可撤回的交接记录
+    - `TRANSFER_ALREADY_REVOKED`: 最近一条交接记录已被撤回
+    - `SAMPLE_INVALID_STATUS`: 箱内样本状态不允许撤回
+    - `SAMPLE_ISOLATED`: 箱内有已隔离样本
+    """
+    box = db.query(Box).filter(Box.box_code == request.box_code).first()
+    if not box:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": f"转运箱 {request.box_code} 不存在",
+                "code": "BOX_NOT_FOUND"
+            }
+        )
+
+    if box.current_custodian != request.custodian:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": f"当前保管人是 {box.current_custodian}，{request.custodian} 无权操作",
+                "code": "INVALID_CUSTODIAN",
+                "details": {
+                    "current_custodian": box.current_custodian,
+                    "operation_custodian": request.custodian
+                }
+            }
+        )
+
+    if box.status not in ["SEALED", "IN_TRANSIT"]:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": f"转运箱状态为 {box.status}，只有 SEALED 或 IN_TRANSIT 状态才能撤回",
+                "code": "BOX_INVALID_STATUS",
+                "details": {"box_status": box.status}
+            }
+        )
+
+    non_revoked_transfers = db.query(TransferRecord).filter(
+        TransferRecord.box_id == box.id,
+        TransferRecord.is_revoked == False
+    ).order_by(TransferRecord.transfer_time.desc()).all()
+
+    if not non_revoked_transfers:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": "没有可撤回的交接记录",
+                "code": "NO_TRANSFER_RECORD"
+            }
+        )
+
+    last_transfer = non_revoked_transfers[0]
+
+    if last_transfer.is_revoked:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": "最近一条交接记录已被撤回，无需重复操作",
+                "code": "TRANSFER_ALREADY_REVOKED",
+                "details": {"transfer_id": last_transfer.id}
+            }
+        )
+
+    for sample in box.samples:
+        if sample.is_isolated or sample.status == "ISOLATED":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "error": f"箱内样本 {sample.barcode} 已隔离，不能撤回交接",
+                    "code": "SAMPLE_ISOLATED",
+                    "details": {"barcode": sample.barcode, "isolation_reason": sample.isolation_reason}
+                }
+            )
+        if sample.status not in ["SEALED", "IN_TRANSIT"]:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "error": f"箱内样本 {sample.barcode} 状态为 {sample.status}，不允许撤回",
+                    "code": "SAMPLE_INVALID_STATUS",
+                    "details": {"barcode": sample.barcode, "sample_status": sample.status}
+                }
+            )
+
+    old_box_status = box.status
+    old_box_custodian = box.current_custodian
+    new_box_custodian = last_transfer.from_custodian
+
+    last_transfer.is_revoked = True
+    last_transfer.revoked_at = datetime.now(timezone.utc)
+    last_transfer.revoked_by = request.custodian
+    last_transfer.revoke_reason = request.reason
+
+    old_box_status_val = box.status
+    box.status = "SEALED"
+    box.current_custodian = last_transfer.from_custodian
+
+    for sample in box.samples:
+        old_sample_status = sample.status
+        old_sample_custodian = sample.current_custodian
+        sample.status = "SEALED"
+        sample.current_custodian = last_transfer.from_custodian
+        audit_logger.log_sample_revoke_transfer(
+            db, sample,
+            old_sample_status, "SEALED",
+            old_sample_custodian, last_transfer.from_custodian,
+            request.custodian, last_transfer.id, request.reason
+        )
+
+    audit_logger.log_box_revoke_transfer(
+        db, box,
+        old_box_status_val, "SEALED",
+        old_box_custodian, last_transfer.from_custodian,
+        request.custodian, last_transfer.id, request.reason
+    )
+    audit_logger.log_transfer_revoke(db, last_transfer, request.custodian, request.reason)
+
+    db.commit()
+    db.refresh(last_transfer)
+    db.refresh(box)
+
+    return TransferRevokeResponse(
+        success=True,
+        message=f"交接记录已撤回，箱子和样本已恢复到 SEALED 状态",
+        revoked_transfer_id=last_transfer.id,
+        box_code=box.box_code,
+        old_box_status=old_box_status,
+        new_box_status="SEALED",
+        old_custodian=old_box_custodian,
+        new_custodian=new_box_custodian,
+        rule_version=config_manager.get_current_version() or "UNKNOWN"
+    )
+
+
+@router.get(
+    "/{box_code}/transfer-history",
+    response_model=List[TransferRecordResponse],
+    responses={404: {"model": ErrorResponse, "description": "转运箱不存在"}},
+    summary="查询转运箱交接记录历史"
+)
+def get_transfer_history(box_code: str, db: Session = Depends(get_db)):
+    """
+    查询转运箱的所有交接记录历史，包括已撤回的记录。
+    """
+    box = db.query(Box).filter(Box.box_code == box_code).first()
+    if not box:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": f"转运箱 {box_code} 不存在", "code": "BOX_NOT_FOUND"}
+        )
+
+    transfers = db.query(TransferRecord).filter(
+        TransferRecord.box_id == box.id
+    ).order_by(TransferRecord.transfer_time.desc()).all()
+
+    return transfers
+
+
+@router.post(
     "/{box_code}/complete-testing",
     response_model=BoxResponse,
     summary="完成检测"
@@ -662,7 +851,7 @@ def complete_testing(box_code: str, custodian: str, db: Session = Depends(get_db
 )
 def get_handover_form(box_code: str, db: Session = Depends(get_db)):
     """
-    生成转运箱交接单。
+    生成转运箱交接单，包含撤回历史记录。
     """
     box = db.query(Box).filter(Box.box_code == box_code).first()
     if not box:
@@ -671,9 +860,34 @@ def get_handover_form(box_code: str, db: Session = Depends(get_db)):
             detail={"error": f"转运箱 {box_code} 不存在", "code": "BOX_NOT_FOUND"}
         )
 
-    transfer = db.query(TransferRecord).filter(
+    all_transfers = db.query(TransferRecord).filter(
         TransferRecord.box_id == box.id
-    ).order_by(TransferRecord.transfer_time.desc()).first()
+    ).order_by(TransferRecord.transfer_time.desc()).all()
+
+    active_transfer = None
+    for t in all_transfers:
+        if not t.is_revoked:
+            active_transfer = t
+            break
+
+    revoked_history = []
+    for t in all_transfers:
+        if t.is_revoked:
+            revoked_history.append({
+                "transfer_id": t.id,
+                "from_point": t.from_point,
+                "to_point": t.to_point,
+                "from_custodian": t.from_custodian,
+                "to_custodian": t.to_custodian,
+                "transfer_time": t.transfer_time.isoformat() if t.transfer_time else None,
+                "temperature": t.temperature,
+                "rule_version": t.rule_version,
+                "revoked_at": t.revoked_at.isoformat() if t.revoked_at else None,
+                "revoked_by": t.revoked_by,
+                "revoke_reason": t.revoke_reason
+            })
+
+    transfer = active_transfer
 
     samples = []
     for sample in box.samples:
@@ -695,7 +909,12 @@ def get_handover_form(box_code: str, db: Session = Depends(get_db)):
         transfer_time=transfer.transfer_time if transfer else datetime.now(timezone.utc),
         samples=samples,
         temperature=transfer.temperature if transfer else None,
-        rule_version=box.rule_version
+        rule_version=box.rule_version,
+        is_revoked=transfer.is_revoked if transfer else None,
+        revoked_at=transfer.revoked_at if transfer else None,
+        revoked_by=transfer.revoked_by if transfer else None,
+        revoke_reason=transfer.revoke_reason if transfer else None,
+        revoked_transfer_history=revoked_history if revoked_history else None
     )
 
     os.makedirs(EXPORTS_DIR, exist_ok=True)
@@ -713,7 +932,7 @@ def get_handover_form(box_code: str, db: Session = Depends(get_db)):
 )
 def get_exception_list(box_code: str, db: Session = Depends(get_db)):
     """
-    生成转运箱异常清单。
+    生成转运箱异常清单，包含撤回历史记录。
     """
     box = db.query(Box).filter(Box.box_code == box_code).first()
     if not box:
@@ -765,11 +984,44 @@ def get_exception_list(box_code: str, db: Session = Depends(get_db)):
                 "message": msg
             })
 
+    all_transfers = db.query(TransferRecord).filter(
+        TransferRecord.box_id == box.id
+    ).order_by(TransferRecord.transfer_time.desc()).all()
+
+    revoked_history = []
+    for t in all_transfers:
+        if t.is_revoked:
+            revoked_history.append({
+                "transfer_id": t.id,
+                "from_point": t.from_point,
+                "to_point": t.to_point,
+                "from_custodian": t.from_custodian,
+                "to_custodian": t.to_custodian,
+                "transfer_time": t.transfer_time.isoformat() if t.transfer_time else None,
+                "temperature": t.temperature,
+                "rule_version": t.rule_version,
+                "revoked_at": t.revoked_at.isoformat() if t.revoked_at else None,
+                "revoked_by": t.revoked_by,
+                "revoke_reason": t.revoke_reason
+            })
+
+    for t in all_transfers:
+        if t.is_revoked:
+            exceptions.append({
+                "type": "TRANSFER_REVOKED",
+                "transfer_id": t.id,
+                "revoked_at": t.revoked_at.isoformat() if t.revoked_at else None,
+                "revoked_by": t.revoked_by,
+                "revoke_reason": t.revoke_reason,
+                "message": f"交接记录已被撤回: {t.revoke_reason}"
+            })
+
     result = ExceptionListResponse(
         box_code=box_code,
         exceptions=exceptions,
         generated_at=datetime.now(timezone.utc),
-        total_exceptions=len(exceptions)
+        total_exceptions=len(exceptions),
+        revoked_transfer_history=revoked_history if revoked_history else None
     )
 
     os.makedirs(EXPORTS_DIR, exist_ok=True)

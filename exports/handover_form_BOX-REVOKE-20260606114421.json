@@ -1,0 +1,46 @@
+{
+  "box_code": "BOX-REVOKE-20260606114421",
+  "transfer_id": 2,
+  "from_point": "CP001",
+  "to_point": "TP001",
+  "from_custodian": "Dr. Zhang",
+  "to_custodian": "Dr. Li",
+  "transfer_time": "2026-06-06 03:44:24.093894",
+  "samples": [
+    {
+      "barcode": "BLD-REVOKE-20260606114421-01",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T11:44:23",
+      "status": "DELIVERED"
+    },
+    {
+      "barcode": "BLD-REVOKE-20260606114421-02",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T11:44:23",
+      "status": "DELIVERED"
+    }
+  ],
+  "temperature": 4.8,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 1,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T03:44:23.975654",
+      "temperature": 5.0,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T03:44:24.041443",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "????????????????????????"
+    }
+  ]
+}

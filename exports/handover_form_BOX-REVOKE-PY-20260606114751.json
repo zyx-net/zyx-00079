@@ -1,0 +1,46 @@
+{
+  "box_code": "BOX-REVOKE-PY-20260606114751",
+  "transfer_id": 2,
+  "from_point": "CP001",
+  "to_point": "TP001",
+  "from_custodian": "Dr. Zhang",
+  "to_custodian": "Dr. Li",
+  "transfer_time": "2026-06-06 03:48:24.057426",
+  "samples": [
+    {
+      "barcode": "BLD-REVOKE-PY-20260606114751-01",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T03:47:51",
+      "status": "DELIVERED"
+    },
+    {
+      "barcode": "BLD-REVOKE-PY-20260606114751-02",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T03:47:51",
+      "status": "DELIVERED"
+    }
+  ],
+  "temperature": 4.8,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 1,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T03:48:07.941235",
+      "temperature": 5.0,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T03:48:16.005091",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "交接信息录入错误，接收人信息填错"
+    }
+  ]
+}

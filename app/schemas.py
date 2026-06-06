@@ -128,9 +128,31 @@ class TransferRecordResponse(BaseModel):
     temperature: Optional[float]
     duration_minutes: Optional[int]
     rule_version: str
+    is_revoked: bool
+    revoked_at: Optional[datetime]
+    revoked_by: Optional[str]
+    revoke_reason: Optional[str]
 
     class Config:
         from_attributes = True
+
+
+class TransferRevokeRequest(BaseModel):
+    box_code: str = Field(..., description="箱号")
+    custodian: str = Field(..., description="操作人（当前保管人）")
+    reason: str = Field(..., min_length=1, max_length=255, description="撤回原因")
+
+
+class TransferRevokeResponse(BaseModel):
+    success: bool
+    message: str
+    revoked_transfer_id: int
+    box_code: str
+    old_box_status: str
+    new_box_status: str
+    old_custodian: str
+    new_custodian: str
+    rule_version: str
 
 
 class AuditLogResponse(BaseModel):
@@ -177,6 +199,11 @@ class HandoverFormResponse(BaseModel):
     samples: List[Dict[str, Any]]
     temperature: Optional[float]
     rule_version: str
+    is_revoked: Optional[bool] = None
+    revoked_at: Optional[datetime] = None
+    revoked_by: Optional[str] = None
+    revoke_reason: Optional[str] = None
+    revoked_transfer_history: Optional[List[Dict[str, Any]]] = None
 
 
 class ExceptionListResponse(BaseModel):
@@ -184,3 +211,4 @@ class ExceptionListResponse(BaseModel):
     exceptions: List[Dict[str, Any]]
     generated_at: datetime
     total_exceptions: int
+    revoked_transfer_history: Optional[List[Dict[str, Any]]] = None

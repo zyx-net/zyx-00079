@@ -1,0 +1,30 @@
+{
+  "box_code": "REV-RVW-20260606115457",
+  "exceptions": [
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 3,
+      "revoked_at": "2026-06-06T03:54:58.277536",
+      "revoked_by": "Bob",
+      "revoke_reason": "reviewer found destination typo",
+      "message": "交接记录已被撤回: reviewer found destination typo"
+    }
+  ],
+  "generated_at": "2026-06-06 03:54:58.344694+00:00",
+  "total_exceptions": 1,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 3,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Alice",
+      "to_custodian": "Bob",
+      "transfer_time": "2026-06-06T03:54:58.231746",
+      "temperature": 4.2,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T03:54:58.277536",
+      "revoked_by": "Bob",
+      "revoke_reason": "reviewer found destination typo"
+    }
+  ]
+}

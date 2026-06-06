@@ -176,6 +176,90 @@ class AuditLogger:
         )
 
     @staticmethod
+    def log_transfer_revoke(
+        db: Session,
+        transfer: TransferRecord,
+        custodian: str,
+        reason: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="TRANSFER",
+            entity_id=transfer.id,
+            action="REVOKE_TRANSFER",
+            custodian=custodian,
+            old_status=transfer.status,
+            new_status="REVOKED",
+            details={
+                "transfer_id": transfer.id,
+                "box_id": transfer.box_id,
+                "from_custodian": transfer.from_custodian,
+                "to_custodian": transfer.to_custodian,
+                "from_point": transfer.from_point,
+                "to_point": transfer.to_point,
+                "revoke_reason": reason
+            }
+        )
+
+    @staticmethod
+    def log_box_revoke_transfer(
+        db: Session,
+        box: Box,
+        old_status: str,
+        new_status: str,
+        old_custodian: str,
+        new_custodian: str,
+        custodian: str,
+        revoked_transfer_id: int,
+        reason: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="BOX",
+            entity_id=box.id,
+            action="REVOKE_TRANSFER",
+            custodian=custodian,
+            old_status=old_status,
+            new_status=new_status,
+            details={
+                "box_code": box.box_code,
+                "revoked_transfer_id": revoked_transfer_id,
+                "old_custodian": old_custodian,
+                "new_custodian": new_custodian,
+                "revoke_reason": reason
+            }
+        )
+
+    @staticmethod
+    def log_sample_revoke_transfer(
+        db: Session,
+        sample: Sample,
+        old_status: str,
+        new_status: str,
+        old_custodian: str,
+        new_custodian: str,
+        custodian: str,
+        revoked_transfer_id: int,
+        reason: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="SAMPLE",
+            entity_id=sample.id,
+            action="REVOKE_TRANSFER",
+            custodian=custodian,
+            old_status=old_status,
+            new_status=new_status,
+            details={
+                "barcode": sample.barcode,
+                "revoked_transfer_id": revoked_transfer_id,
+                "old_custodian": old_custodian,
+                "new_custodian": new_custodian,
+                "revoke_reason": reason
+            }
+        )
+
+    @staticmethod
     def get_audit_logs(
         db: Session,
         entity_type: Optional[str] = None,

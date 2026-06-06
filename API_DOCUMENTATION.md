@@ -546,6 +546,134 @@ CREATED → BOXED → SEALED → IN_TRANSIT → DELIVERED → TESTING → COMPLE
 }
 ```
 
+**失败响应** (409 - 箱内有已隔离样本):
+```json
+{
+  "error": "箱内样本 ISO-TRANSIT-0001 已隔离，不能继续流转验收",
+  "code": "SAMPLE_ISOLATED",
+  "details": {
+    "barcode": "ISO-TRANSIT-0001",
+    "isolation_reason": "Sample container damaged during transit"
+  }
+}
+```
+
+### POST /api/boxes/revoke-transfer
+撤回交接记录
+
+**功能说明**：
+已封箱或运输中的转运箱如果发现交接信息录错，当前保管人可以提交撤回原因，把最近一条交接记录标记为撤回，箱子和箱内样本回到可重新交接的稳定状态。
+
+**限制条件**：
+- 只有 SEALED 或 IN_TRANSIT 状态的箱子可以撤回
+- 已经到站验收(DELIVERED)、隔离(ISOLATED)、检测(TESTING/COMPLETED)或归档(ARCHIVED)的记录不能撤回
+- 箱内所有样本状态必须允许撤回
+- 不能重复撤回同一条交接记录
+- 撤回后再次交接要使用当前规则版本并生成新的交接记录，旧记录不能被覆盖
+
+**请求体**:
+```json
+{
+  "box_code": "BOX-2026-0001",
+  "custodian": "Dr. Li",
+  "reason": "交接信息录入错误，接收人信息填错"
+}
+```
+
+**成功响应** (200):
+```json
+{
+  "success": true,
+  "message": "交接记录已撤回，箱子和样本已恢复到 SEALED 状态",
+  "revoked_transfer_id": 1,
+  "box_code": "BOX-2026-0001",
+  "old_box_status": "IN_TRANSIT",
+  "new_box_status": "SEALED",
+  "old_custodian": "Dr. Li",
+  "new_custodian": "Dr. Zhang",
+  "rule_version": "v1.0"
+}
+```
+
+**失败响应** (400 - 非当前保管人):
+```json
+{
+  "error": "当前保管人是 Dr. Li，Dr. Wang 无权操作",
+  "code": "INVALID_CUSTODIAN",
+  "details": {
+    "current_custodian": "Dr. Li",
+    "operation_custodian": "Dr. Wang"
+  }
+}
+```
+
+**失败响应** (409 - 状态不允许撤回):
+```json
+{
+  "error": "转运箱状态为 DELIVERED，只有 SEALED 或 IN_TRANSIT 状态才能撤回",
+  "code": "BOX_INVALID_STATUS",
+  "details": {
+    "box_status": "DELIVERED"
+  }
+}
+```
+
+**失败响应** (409 - 重复撤回):
+```json
+{
+  "error": "最近一条交接记录已被撤回，无需重复操作",
+  "code": "TRANSFER_ALREADY_REVOKED",
+  "details": {
+    "transfer_id": 1
+  }
+}
+```
+
+### GET /api/boxes/{box_code}/transfer-history
+查询转运箱交接记录历史
+
+**功能说明**：查询转运箱的所有交接记录，包括已撤回的记录。
+
+**成功响应** (200):
+```json
+[
+  {
+    "id": 2,
+    "box_id": 1,
+    "from_point": "CP001",
+    "to_point": "TP001",
+    "from_custodian": "Dr. Zhang",
+    "to_custodian": "Dr. Li",
+    "transfer_time": "2026-06-06T09:00:00",
+    "status": "IN_TRANSIT",
+    "temperature": 5.0,
+    "duration_minutes": null,
+    "rule_version": "v1.0",
+    "is_revoked": false,
+    "revoked_at": null,
+    "revoked_by": null,
+    "revoke_reason": null
+  },
+  {
+    "id": 1,
+    "box_id": 1,
+    "from_point": "CP001",
+    "to_point": "TP002",
+    "from_custodian": "Dr. Zhang",
+    "to_custodian": "Dr. Wang",
+    "transfer_time": "2026-06-06T08:30:00",
+    "status": "IN_TRANSIT",
+    "temperature": 4.5,
+    "duration_minutes": null,
+    "rule_version": "v1.0",
+    "is_revoked": true,
+    "revoked_at": "2026-06-06T08:45:00",
+    "revoked_by": "Dr. Zhang",
+    "revoke_reason": "接收点信息录入错误"
+  }
+]
+```
+
 ### GET /api/boxes/{box_code}/handover-form
 生成交接单
 

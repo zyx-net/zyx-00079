@@ -1,0 +1,39 @@
+{
+  "box_code": "REV-RVW-20260606115457",
+  "transfer_id": 4,
+  "from_point": "CP001",
+  "to_point": "TP002",
+  "from_custodian": "Alice",
+  "to_custodian": "Carol",
+  "transfer_time": "2026-06-06 03:54:58.304786",
+  "samples": [
+    {
+      "barcode": "SMP-RVW-20260606115457",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T03:52:58",
+      "status": "DELIVERED"
+    }
+  ],
+  "temperature": 4.0,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 3,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Alice",
+      "to_custodian": "Bob",
+      "transfer_time": "2026-06-06T03:54:58.231746",
+      "temperature": 4.2,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T03:54:58.277536",
+      "revoked_by": "Bob",
+      "revoke_reason": "reviewer found destination typo"
+    }
+  ]
+}

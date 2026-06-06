@@ -73,6 +73,10 @@ class TransferRecord(Base):
     temperature = Column(Float, nullable=True)
     duration_minutes = Column(Integer, nullable=True)
     rule_version = Column(String(50), nullable=False)
+    is_revoked = Column(Boolean, default=False)
+    revoked_at = Column(DateTime, nullable=True)
+    revoked_by = Column(String(100), nullable=True)
+    revoke_reason = Column(String(255), nullable=True)
 
     sample = relationship("Sample", back_populates="transfer_records")
     box = relationship("Box", back_populates="transfer_records")
