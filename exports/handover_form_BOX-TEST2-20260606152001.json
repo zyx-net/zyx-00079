@@ -1,0 +1,46 @@
+{
+  "box_code": "BOX-TEST2-20260606152001",
+  "transfer_id": 72,
+  "from_point": "CP001",
+  "to_point": "TP002",
+  "from_custodian": "Dr. Zhang",
+  "to_custodian": "Dr. Wang",
+  "transfer_time": "2026-06-06 07:20:39.965260",
+  "samples": [
+    {
+      "barcode": "SAMP-REG-FIX-20260606072023-0",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T07:20:23.838195",
+      "status": "IN_TRANSIT"
+    },
+    {
+      "barcode": "SAMP-REG-FIX-20260606072025-1",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T07:20:25.855248",
+      "status": "IN_TRANSIT"
+    }
+  ],
+  "temperature": 4.8,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 71,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T07:20:35.929849",
+      "temperature": 4.8,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T07:20:37.947543",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "样本错误"
+    }
+  ]
+}

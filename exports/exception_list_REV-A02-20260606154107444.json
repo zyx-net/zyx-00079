@@ -1,0 +1,30 @@
+{
+  "box_code": "REV-A02-20260606154107444",
+  "exceptions": [
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 123,
+      "revoked_at": "2026-06-06T07:41:07.610336",
+      "revoked_by": "DrBeta",
+      "revoke_reason": "reviewer revoke first wrong transfer",
+      "message": "交接记录已被撤回: reviewer revoke first wrong transfer"
+    }
+  ],
+  "generated_at": "2026-06-06 07:41:07.748927+00:00",
+  "total_exceptions": 1,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 123,
+      "from_point": "CP001",
+      "to_point": "TP002",
+      "from_custodian": "DrAlpha",
+      "to_custodian": "DrBeta",
+      "transfer_time": "2026-06-06T07:41:07.591201",
+      "temperature": 5.0,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T07:41:07.610336",
+      "revoked_by": "DrBeta",
+      "revoke_reason": "reviewer revoke first wrong transfer"
+    }
+  ]
+}

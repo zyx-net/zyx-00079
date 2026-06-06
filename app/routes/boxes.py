@@ -418,17 +418,33 @@ def transfer_box(request: TransferRequest, db: Session = Depends(get_db)):
         TransferRecord.box_id == box.id
     ).order_by(TransferRecord.transfer_time.desc()).all()
 
-    last_any_transfer = all_transfers[0] if all_transfers else None
     last_active_transfer = None
     for t in all_transfers:
         if not t.is_revoked:
             last_active_transfer = t
             break
 
-    if last_any_transfer:
-        from_point = last_any_transfer.to_point
+    if last_active_transfer:
+        from_point = last_active_transfer.to_point
+        expected_from_custodian = last_active_transfer.to_custodian
     else:
         from_point = box.samples[0].collection_point if box.samples else "UNKNOWN"
+        expected_from_custodian = box.current_custodian
+
+    if request.from_custodian != expected_from_custodian:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": f"交接起始保管人错误，应为 {expected_from_custodian}，不是 {request.from_custodian}",
+                "code": "INVALID_CUSTODIAN",
+                "details": {
+                    "expected_from_custodian": expected_from_custodian,
+                    "actual_from_custodian": request.from_custodian,
+                    "has_active_transfer": last_active_transfer is not None,
+                    "from_point": from_point
+                }
+            }
+        )
 
     transfer = TransferRecord(
         box_id=box.id,
@@ -463,7 +479,7 @@ def transfer_box(request: TransferRequest, db: Session = Depends(get_db)):
 
     if any(t.is_revoked for t in all_transfers):
         revoked_count = len([t for t in all_transfers if t.is_revoked])
-        prev_id = last_any_transfer.id if last_any_transfer else None
+        prev_id = last_active_transfer.id if last_active_transfer else None
         audit_logger.log_re_transfer(
             db, transfer, request.from_custodian,
             prev_transfer_id=prev_id,

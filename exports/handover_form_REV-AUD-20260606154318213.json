@@ -1,0 +1,39 @@
+{
+  "box_code": "REV-AUD-20260606154318213",
+  "transfer_id": 126,
+  "from_point": "CP001",
+  "to_point": "TP001",
+  "from_custodian": "AudA",
+  "to_custodian": "AudC",
+  "transfer_time": "2026-06-06 07:43:18.323104",
+  "samples": [
+    {
+      "barcode": "SMP-AUD-20260606154318213",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T07:43:18.214520",
+      "status": "IN_TRANSIT"
+    }
+  ],
+  "temperature": 5.0,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 125,
+      "from_point": "CP001",
+      "to_point": "TP002",
+      "from_custodian": "AudA",
+      "to_custodian": "AudB",
+      "transfer_time": "2026-06-06T07:43:18.293051",
+      "temperature": 5.0,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T07:43:18.310483",
+      "revoked_by": "AudB",
+      "revoke_reason": "audit verify revoke"
+    }
+  ]
+}

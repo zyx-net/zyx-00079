@@ -1,0 +1,147 @@
+{
+  "test_time": "2026-06-06T15:34:12.686258",
+  "box_code": "BOX-REAL-LINK-20260606153326",
+  "all_passed": true,
+  "verifications": {
+    "from_point_consistent": true,
+    "custodian_consistent": true,
+    "status_consistent": true,
+    "revoke_history_consistent": true
+  },
+  "transfer_history": [
+    {
+      "id": 122,
+      "sample_id": null,
+      "box_id": 65,
+      "from_point": "CP001",
+      "to_point": "TP002",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Wang",
+      "transfer_time": "2026-06-06T07:33:54.577485",
+      "status": "IN_TRANSIT",
+      "temperature": 4.3,
+      "duration_minutes": null,
+      "rule_version": "v1.0",
+      "is_revoked": false,
+      "revoked_at": null,
+      "revoked_by": null,
+      "revoke_reason": null
+    },
+    {
+      "id": 121,
+      "sample_id": null,
+      "box_id": 65,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T07:33:42.493939",
+      "status": "IN_TRANSIT",
+      "temperature": 4.3,
+      "duration_minutes": null,
+      "rule_version": "v1.0",
+      "is_revoked": true,
+      "revoked_at": "2026-06-06T07:33:46.526610",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "样本信息有误，需要重新核对"
+    }
+  ],
+  "handover_form": {
+    "box_code": "BOX-REAL-LINK-20260606153326",
+    "transfer_id": 122,
+    "from_point": "CP001",
+    "to_point": "TP002",
+    "from_custodian": "Dr. Zhang",
+    "to_custodian": "Dr. Wang",
+    "transfer_time": "2026-06-06T07:33:54.577485",
+    "samples": [
+      {
+        "barcode": "SAMP-REAL-20260606073328-0",
+        "sample_type": "blood",
+        "collection_point": "CP001",
+        "collection_time": "2026-06-06T07:33:28.371286",
+        "status": "DELIVERED"
+      },
+      {
+        "barcode": "SAMP-REAL-20260606073330-1",
+        "sample_type": "blood",
+        "collection_point": "CP001",
+        "collection_time": "2026-06-06T07:33:30.398067",
+        "status": "DELIVERED"
+      }
+    ],
+    "temperature": 4.3,
+    "rule_version": "v1.0",
+    "is_revoked": false,
+    "revoked_at": null,
+    "revoked_by": null,
+    "revoke_reason": null,
+    "revoked_transfer_history": [
+      {
+        "transfer_id": 121,
+        "from_point": "CP001",
+        "to_point": "TP001",
+        "from_custodian": "Dr. Zhang",
+        "to_custodian": "Dr. Li",
+        "transfer_time": "2026-06-06T07:33:42.493939",
+        "temperature": 4.3,
+        "rule_version": "v1.0",
+        "revoked_at": "2026-06-06T07:33:46.526610",
+        "revoked_by": "Dr. Li",
+        "revoke_reason": "样本信息有误，需要重新核对"
+      }
+    ]
+  },
+  "box_info": {
+    "id": 65,
+    "box_code": "BOX-REAL-LINK-20260606153326",
+    "destination": "TP002",
+    "status": "DELIVERED",
+    "current_custodian": "Dr. Wang",
+    "temperature_records": "[{\"temperature\": 4.0, \"timestamp\": \"2026-06-06T07:33:56.595095+00:00\"}]",
+    "created_at": "2026-06-06T07:33:34.422672",
+    "updated_at": "2026-06-06T07:33:58.606411",
+    "sealed_at": "2026-06-06T07:33:38.461169",
+    "rule_version": "v1.0",
+    "samples": [
+      {
+        "id": 117,
+        "barcode": "SAMP-REAL-20260606073328-0",
+        "sample_type": "blood",
+        "collection_point": "CP001",
+        "collection_time": "2026-06-06T07:33:28.371286",
+        "patient_info": "{\"name\": \"张三\", \"id\": \"P20260606073328\"}",
+        "status": "DELIVERED",
+        "current_custodian": "Dr. Wang",
+        "box_id": 65,
+        "created_at": "2026-06-06T07:33:30.387633",
+        "updated_at": "2026-06-06T07:33:58.606726",
+        "rule_version": "v1.0",
+        "is_isolated": false,
+        "isolation_reason": null,
+        "test_result": null,
+        "result_time": null,
+        "archived_at": null
+      },
+      {
+        "id": 118,
+        "barcode": "SAMP-REAL-20260606073330-1",
+        "sample_type": "blood",
+        "collection_point": "CP001",
+        "collection_time": "2026-06-06T07:33:30.398067",
+        "patient_info": "{\"name\": \"张三\", \"id\": \"P20260606073330\"}",
+        "status": "DELIVERED",
+        "current_custodian": "Dr. Wang",
+        "box_id": 65,
+        "created_at": "2026-06-06T07:33:32.405282",
+        "updated_at": "2026-06-06T07:33:58.607459",
+        "rule_version": "v1.0",
+        "is_isolated": false,
+        "isolation_reason": null,
+        "test_result": null,
+        "result_time": null,
+        "archived_at": null
+      }
+    ]
+  }
+}

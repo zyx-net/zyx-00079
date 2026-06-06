@@ -821,6 +821,7 @@ CREATED → BOXED → SEALED → IN_TRANSIT → DELIVERED → TESTING → COMPLE
 | `NO_ACTIVE_CONFIG` | 无活动配置 |
 | `NO_TRANSFER_RECORD` | 没有可撤回的交接记录 |
 | `TRANSFER_ALREADY_REVOKED` | 最近一条交接记录已被撤回，重复撤回 |
+| `CONCURRENT_CONFLICT` | 并发冲突，该交接记录已被其他请求撤回 |
 | `BOX_INVALID_STATUS` | 箱子状态不允许当前操作 |
 
 ---
