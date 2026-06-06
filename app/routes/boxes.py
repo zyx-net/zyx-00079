@@ -602,9 +602,9 @@ def accept_box(request: AcceptanceRequest, db: Session = Depends(get_db)):
     "/revoke-transfer",
     response_model=TransferRevokeResponse,
     responses={
-        400: {"model": ErrorResponse, "description": "请求错误或权限不足"},
-        404: {"model": ErrorResponse, "description": "箱不存在或无交接记录"},
-        409: {"model": ErrorResponse, "description": "状态冲突，无法撤回"}
+        400: {"model": ErrorResponse, "description": "请求错误或权限不足（INVALID_CUSTODIAN）"},
+        404: {"model": ErrorResponse, "description": "箱不存在或无交接记录（BOX_NOT_FOUND、NO_TRANSFER_RECORD）"},
+        409: {"model": ErrorResponse, "description": "状态冲突，无法撤回（BOX_INVALID_STATUS、TRANSFER_ALREADY_REVOKED、SAMPLE_INVALID_STATUS、SAMPLE_ISOLATED）"}
     },
     summary="撤回交接记录"
 )

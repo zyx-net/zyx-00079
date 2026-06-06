@@ -1,0 +1,30 @@
+{
+  "box_code": "BOX-RESTART-2026-06-06T055352",
+  "exceptions": [
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 31,
+      "revoked_at": "2026-06-06T05:54:12.848993",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "重启验证-第一次撤回",
+      "message": "交接记录已被撤回: 重启验证-第一次撤回"
+    }
+  ],
+  "generated_at": "2026-06-06T05:54:34.100123Z",
+  "total_exceptions": 1,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 31,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T05:54:10.833266",
+      "temperature": 4.8,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T05:54:12.848993",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "重启验证-第一次撤回"
+    }
+  ]
+}

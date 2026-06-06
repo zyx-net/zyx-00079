@@ -1,0 +1,14 @@
+{
+  "box_code": "BOX-ALIGN-2026-06-06T055035",
+  "all_passed": false,
+  "passed_count": 8,
+  "total_count": 9,
+  "tests": {
+    "duplicate_revoke": true,
+    "revoke_after_accept": true,
+    "doc_summary": true,
+    "export_json": true,
+    "audit_log": false,
+    "openapi": true
+  }
+}

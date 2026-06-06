@@ -637,6 +637,17 @@ CREATED → BOXED → SEALED → IN_TRANSIT → DELIVERED → TESTING → COMPLE
 }
 ```
 
+**失败响应** (404 - 无交接记录):
+```json
+{
+  "error": "没有可撤回的交接记录",
+  "code": "NO_TRANSFER_RECORD",
+  "details": {
+    "box_code": "BOX-2026-0001"
+  }
+}
+```
+
 ### GET /api/boxes/{box_code}/transfer-history
 查询转运箱交接记录历史
 
@@ -808,6 +819,9 @@ CREATED → BOXED → SEALED → IN_TRANSIT → DELIVERED → TESTING → COMPLE
 | `TIME_LIMIT_VIOLATION` | 超出时限 |
 | `CONFIG_NOT_LOADED` | 配置未加载 |
 | `NO_ACTIVE_CONFIG` | 无活动配置 |
+| `NO_TRANSFER_RECORD` | 没有可撤回的交接记录 |
+| `TRANSFER_ALREADY_REVOKED` | 最近一条交接记录已被撤回，重复撤回 |
+| `BOX_INVALID_STATUS` | 箱子状态不允许当前操作 |
 
 ---
 

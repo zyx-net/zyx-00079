@@ -1,0 +1,39 @@
+{
+  "box_code": "REV-A03-MAIN-20260606060015644744",
+  "transfer_id": 36,
+  "from_point": "Lab-A",
+  "to_point": "Lab-B",
+  "from_custodian": "Dr. Origin",
+  "to_custodian": "Dr. Receiver2",
+  "transfer_time": "2026-06-06 06:00:15.779846",
+  "samples": [
+    {
+      "barcode": "SMP-A03-MAIN-20260606060015644744",
+      "sample_type": "blood",
+      "collection_point": "Lab-A",
+      "collection_time": "2026-06-06T06:00:15.644771",
+      "status": "DELIVERED"
+    }
+  ],
+  "temperature": 4.5,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 35,
+      "from_point": "Lab-A",
+      "to_point": "Lab-B",
+      "from_custodian": "Dr. Origin",
+      "to_custodian": "Dr. Receiver",
+      "transfer_time": "2026-06-06T06:00:15.742746",
+      "temperature": 4.0,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T06:00:15.760628",
+      "revoked_by": "Dr. Receiver",
+      "revoke_reason": "review correction"
+    }
+  ]
+}
