@@ -1,0 +1,39 @@
+{
+  "box_code": "REV-CUSTOM-20260606044938",
+  "transfer_id": 0,
+  "from_point": "CP-REVIEW",
+  "to_point": "TP-REVIEW",
+  "from_custodian": "Alice",
+  "to_custodian": "Alice",
+  "transfer_time": "2026-06-06 04:49:38.401776+00:00",
+  "samples": [
+    {
+      "barcode": "SAMPLE-20260606044938",
+      "sample_type": "blood",
+      "collection_point": "CP-REVIEW",
+      "collection_time": "2026-06-06T04:44:38.296245",
+      "status": "SEALED"
+    }
+  ],
+  "temperature": null,
+  "rule_version": "v1.0",
+  "is_revoked": null,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 20,
+      "from_point": "CP-REVIEW",
+      "to_point": "TP-A",
+      "from_custodian": "Alice",
+      "to_custodian": "Bob",
+      "transfer_time": "2026-06-06T04:49:38.370165",
+      "temperature": 4.5,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T04:49:38.385229",
+      "revoked_by": "Bob",
+      "revoke_reason": "review first revoke"
+    }
+  ]
+}

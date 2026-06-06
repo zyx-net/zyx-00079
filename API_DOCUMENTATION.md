@@ -37,9 +37,17 @@ zyx-00079/
 
 ```
 CREATED → BOXED → SEALED → IN_TRANSIT → DELIVERED → TESTING → COMPLETED → ARCHIVED
-                                   ↓            ↓         ↓
-                               ISOLATED     ISOLATED  ISOLATED
+                     ↑         ↓            ↓         ↓
+                     |     ISOLATED     ISOLATED  ISOLATED
+                     └───────┘
+                   (撤回交接)
 ```
+
+**撤回功能说明**：
+- 只有 `SEALED` 或 `IN_TRANSIT` 状态的箱子可以撤回
+- 撤回后箱子和箱内样本回到 `SEALED` 状态，保管人回滚到原交出人
+- 已撤回的交接记录被标记为 `is_revoked = true`，不会被物理删除
+- 撤回后再次交接会生成新的交接记录，使用当前规则版本
 
 ## 通用响应格式
 

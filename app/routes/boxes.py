@@ -664,12 +664,11 @@ def revoke_transfer(request: TransferRevokeRequest, db: Session = Depends(get_db
             }
         )
 
-    non_revoked_transfers = db.query(TransferRecord).filter(
-        TransferRecord.box_id == box.id,
-        TransferRecord.is_revoked == False
+    all_transfers = db.query(TransferRecord).filter(
+        TransferRecord.box_id == box.id
     ).order_by(TransferRecord.transfer_time.desc()).all()
 
-    if not non_revoked_transfers:
+    if not all_transfers:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
@@ -678,7 +677,7 @@ def revoke_transfer(request: TransferRevokeRequest, db: Session = Depends(get_db
             }
         )
 
-    last_transfer = non_revoked_transfers[0]
+    last_transfer = all_transfers[0]
 
     if last_transfer.is_revoked:
         raise HTTPException(

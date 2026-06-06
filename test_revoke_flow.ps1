@@ -261,7 +261,7 @@ try {
     Write-TestResult -TestName "Duplicate revoke should fail" -Passed $false -Details "Should have rejected duplicate revoke but succeeded"
 } catch {
     $errorResponse = $_.ErrorDetails.Message | ConvertFrom-Json
-    if ($errorResponse.code -eq "TRANSFER_ALREADY_REVOKED" -or $errorResponse.code -eq "NO_TRANSFER_RECORD") {
+    if ($errorResponse.code -eq "TRANSFER_ALREADY_REVOKED") {
         Write-TestResult -TestName "Duplicate revoke" -Passed $true -Details "Correctly rejected with $($errorResponse.code)"
     } else {
         Write-TestResult -TestName "Duplicate revoke" -Passed $false -Details "Wrong error code: $($errorResponse.code)"

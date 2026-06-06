@@ -1,0 +1,30 @@
+{
+  "box_code": "REV-CUSTOM-20260606044938",
+  "exceptions": [
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 20,
+      "revoked_at": "2026-06-06T04:49:38.385229",
+      "revoked_by": "Bob",
+      "revoke_reason": "review first revoke",
+      "message": "交接记录已被撤回: review first revoke"
+    }
+  ],
+  "generated_at": "2026-06-06 04:49:38.407591+00:00",
+  "total_exceptions": 1,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 20,
+      "from_point": "CP-REVIEW",
+      "to_point": "TP-A",
+      "from_custodian": "Alice",
+      "to_custodian": "Bob",
+      "transfer_time": "2026-06-06T04:49:38.370165",
+      "temperature": 4.5,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T04:49:38.385229",
+      "revoked_by": "Bob",
+      "revoke_reason": "review first revoke"
+    }
+  ]
+}

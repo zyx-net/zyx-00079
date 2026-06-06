@@ -265,7 +265,7 @@ def main():
         response = requests.post(f"{BASE_URL}/api/boxes/revoke-transfer", json=data)
         if response.status_code >= 400:
             error_code = get_error_code(response)
-            if error_code in ["TRANSFER_ALREADY_REVOKED", "NO_TRANSFER_RECORD"]:
+            if error_code == "TRANSFER_ALREADY_REVOKED" and response.status_code == 409:
                 print_test_result("Duplicate revoke", True,
                     f"Correctly rejected with {error_code}")
             else:

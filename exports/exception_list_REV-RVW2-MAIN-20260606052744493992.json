@@ -1,0 +1,30 @@
+{
+  "box_code": "REV-RVW2-MAIN-20260606052744493992",
+  "exceptions": [
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 22,
+      "revoked_at": "2026-06-06T05:27:44.602639",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "reviewer first revoke",
+      "message": "交接记录已被撤回: reviewer first revoke"
+    }
+  ],
+  "generated_at": "2026-06-06 05:27:44.661273+00:00",
+  "total_exceptions": 1,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 22,
+      "from_point": "CP-RVW",
+      "to_point": "TP-RVW",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T05:27:44.579722",
+      "temperature": 5.0,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T05:27:44.602639",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "reviewer first revoke"
+    }
+  ]
+}

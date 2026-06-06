@@ -1,0 +1,59 @@
+{
+  "box_code": "BOX-REV-CONFLICT-20260606043528",
+  "transfer_id": 9,
+  "from_point": "CP001",
+  "to_point": "TP001",
+  "from_custodian": "Dr. Zhang",
+  "to_custodian": "Dr. Li",
+  "transfer_time": "2026-06-06T04:35:53.196468",
+  "samples": [
+    {
+      "barcode": "SAMP-REV-CONFLICT-20260606043528-0",
+      "sample_type": "urine",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T04:35:28.957667",
+      "status": "DELIVERED"
+    },
+    {
+      "barcode": "SAMP-REV-CONFLICT-20260606043530-1",
+      "sample_type": "urine",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T04:35:30.998717",
+      "status": "DELIVERED"
+    }
+  ],
+  "temperature": 4.3,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 8,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Wang",
+      "transfer_time": "2026-06-06T04:35:47.150171",
+      "temperature": 4.5,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T04:35:49.169002",
+      "revoked_by": "Dr. Wang",
+      "revoke_reason": "新交接信息也需要修改"
+    },
+    {
+      "transfer_id": 7,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T04:35:41.087997",
+      "temperature": 4.8,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T04:35:43.114317",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "交接信息录入错误"
+    }
+  ]
+}
