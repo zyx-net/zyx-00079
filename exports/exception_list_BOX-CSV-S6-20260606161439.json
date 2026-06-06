@@ -1,0 +1,30 @@
+{
+  "box_code": "BOX-CSV-S6-20260606161439",
+  "exceptions": [
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 168,
+      "revoked_at": "2026-06-06T08:16:22.906785",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "测试异常",
+      "message": "交接记录已被撤回: 测试异常"
+    }
+  ],
+  "generated_at": "2026-06-06 08:16:24.926755+00:00",
+  "total_exceptions": 1,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 168,
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T08:16:20.887499",
+      "temperature": 4.3,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T08:16:22.906785",
+      "revoked_by": "Dr. Li",
+      "revoke_reason": "测试异常"
+    }
+  ]
+}

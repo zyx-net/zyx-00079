@@ -1,0 +1,53 @@
+{
+  "box_code": "BOX-CSV-S3-20260606161816",
+  "transfer_id": 172,
+  "from_point": "CP001",
+  "to_point": "TP001",
+  "from_custodian": "Dr. Zhang",
+  "to_custodian": "Dr. Li",
+  "transfer_time": "2026-06-06 08:19:09.112353",
+  "samples": [
+    {
+      "barcode": "SAMP-CSV-20260606081850-0",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T08:18:50.943124",
+      "status": "IN_TRANSIT"
+    },
+    {
+      "barcode": "SAMP-CSV-20260606081852-1",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T08:18:52.963342",
+      "status": "IN_TRANSIT"
+    },
+    {
+      "barcode": "SAMP-CSV-20260606081854-2",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T08:18:54.978073",
+      "status": "IN_TRANSIT"
+    },
+    {
+      "barcode": "SAMP-CSV-20260606081856-3",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T08:18:56.994264",
+      "status": "IN_TRANSIT"
+    },
+    {
+      "barcode": "SAMP-CSV-20260606081859-4",
+      "sample_type": "blood",
+      "collection_point": "CP001",
+      "collection_time": "2026-06-06T08:18:59.012657",
+      "status": "IN_TRANSIT"
+    }
+  ],
+  "temperature": 4.3,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": null
+}

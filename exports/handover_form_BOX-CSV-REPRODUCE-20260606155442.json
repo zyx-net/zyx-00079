@@ -1,0 +1,17 @@
+{
+  "box_code": "BOX-CSV-REPRODUCE-20260606155442",
+  "transfer_id": 127,
+  "from_point": "UNKNOWN",
+  "to_point": "TP001",
+  "from_custodian": "Dr. Zhang",
+  "to_custodian": "Dr. Li",
+  "transfer_time": "2026-06-06 07:54:54.194728",
+  "samples": [],
+  "temperature": 4.3,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": null
+}

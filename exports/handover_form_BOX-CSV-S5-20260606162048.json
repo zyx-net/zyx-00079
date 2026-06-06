@@ -1,0 +1,32 @@
+{
+  "box_code": "BOX-CSV-S5-20260606162048",
+  "transfer_id": 0,
+  "from_point": "CP002",
+  "to_point": "TP004",
+  "from_custodian": "Dr. Zhang",
+  "to_custodian": "Dr. Zhang",
+  "transfer_time": "2026-06-06 08:22:17.123631+00:00",
+  "samples": [
+    {
+      "barcode": "SAMP-CSV-20260606082205-0",
+      "sample_type": "blood",
+      "collection_point": "CP002",
+      "collection_time": "2026-06-06T08:22:05.031275",
+      "status": "SEALED"
+    },
+    {
+      "barcode": "SAMP-CSV-20260606082207-1",
+      "sample_type": "blood",
+      "collection_point": "CP002",
+      "collection_time": "2026-06-06T08:22:07.045950",
+      "status": "SEALED"
+    }
+  ],
+  "temperature": null,
+  "rule_version": "v1.0",
+  "is_revoked": null,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": null
+}

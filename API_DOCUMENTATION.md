@@ -720,7 +720,9 @@ CREATED → BOXED → SEALED → IN_TRANSIT → DELIVERED → TESTING → COMPLE
 }
 ```
 
-**导出文件**: `exports/handover_form_BOX-2026-0001.json`
+**导出文件**: 
+- `exports/handover_form_BOX-2026-0001.json` - JSON 格式交接单
+- `exports/handover_form_BOX-2026-0001.csv` - CSV 格式交接单
 
 ### GET /api/boxes/{box_code}/exception-list
 生成异常清单

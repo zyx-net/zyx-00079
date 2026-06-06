@@ -22,6 +22,7 @@ from ..config_manager import config_manager
 from ..audit import audit_logger
 import json
 import os
+import csv
 
 router = APIRouter(prefix="/api/boxes", tags=["boxes"])
 
@@ -1001,11 +1002,70 @@ def get_handover_form(box_code: str, db: Session = Depends(get_db)):
     )
 
     os.makedirs(EXPORTS_DIR, exist_ok=True)
-    export_path = os.path.join(EXPORTS_DIR, f"handover_form_{box_code}.json")
-    with open(export_path, 'w', encoding='utf-8') as f:
+    export_path_json = os.path.join(EXPORTS_DIR, f"handover_form_{box_code}.json")
+    with open(export_path_json, 'w', encoding='utf-8') as f:
         json.dump(form.model_dump(), f, ensure_ascii=False, indent=2, default=str)
+    
+    export_path_csv = os.path.join(EXPORTS_DIR, f"handover_form_{box_code}.csv")
+    _write_handover_form_csv(export_path_csv, form)
 
     return form
+
+
+def _write_handover_form_csv(file_path: str, form: HandoverFormResponse):
+    """生成交接单 CSV 文件，使用与 JSON 相同的数据"""
+    form_dict = form.model_dump()
+    
+    with open(file_path, 'w', encoding='utf-8-sig', newline='') as f:
+        writer = csv.writer(f)
+        
+        writer.writerow(["交接单信息", ""])
+        writer.writerow(["箱号", form_dict.get("box_code", "")])
+        writer.writerow(["交接ID", form_dict.get("transfer_id", "")])
+        writer.writerow(["起点", form_dict.get("from_point", "")])
+        writer.writerow(["终点", form_dict.get("to_point", "")])
+        writer.writerow(["交出人", form_dict.get("from_custodian", "")])
+        writer.writerow(["接收人", form_dict.get("to_custodian", "")])
+        writer.writerow(["交接时间", str(form_dict.get("transfer_time", ""))])
+        writer.writerow(["交接温度", form_dict.get("temperature", "")])
+        writer.writerow(["规则版本", form_dict.get("rule_version", "")])
+        writer.writerow(["是否已撤回", form_dict.get("is_revoked", "")])
+        writer.writerow(["撤回时间", str(form_dict.get("revoked_at", ""))])
+        writer.writerow(["撤回人", form_dict.get("revoked_by", "")])
+        writer.writerow(["撤回原因", form_dict.get("revoke_reason", "")])
+        writer.writerow([])
+        
+        writer.writerow(["样本清单", "", "", "", ""])
+        writer.writerow(["序号", "样本条码", "样本类型", "采集点", "采集时间", "状态"])
+        samples = form_dict.get("samples", [])
+        for i, sample in enumerate(samples, 1):
+            writer.writerow([
+                i,
+                sample.get("barcode", ""),
+                sample.get("sample_type", ""),
+                sample.get("collection_point", ""),
+                sample.get("collection_time", ""),
+                sample.get("status", "")
+            ])
+        writer.writerow([])
+        
+        revoked_history = form_dict.get("revoked_transfer_history") or []
+        if revoked_history:
+            writer.writerow(["撤回历史", "", "", "", "", ""])
+            writer.writerow(["序号", "交接ID", "起点", "终点", "交出人", "接收人", "交接时间", "撤回时间", "撤回人", "撤回原因"])
+            for i, rh in enumerate(revoked_history, 1):
+                writer.writerow([
+                    i,
+                    rh.get("transfer_id", ""),
+                    rh.get("from_point", ""),
+                    rh.get("to_point", ""),
+                    rh.get("from_custodian", ""),
+                    rh.get("to_custodian", ""),
+                    rh.get("transfer_time", ""),
+                    rh.get("revoked_at", ""),
+                    rh.get("revoked_by", ""),
+                    rh.get("revoke_reason", "")
+                ])
 
 
 @router.get(
@@ -1108,8 +1168,57 @@ def get_exception_list(box_code: str, db: Session = Depends(get_db)):
     )
 
     os.makedirs(EXPORTS_DIR, exist_ok=True)
-    export_path = os.path.join(EXPORTS_DIR, f"exception_list_{box_code}.json")
-    with open(export_path, 'w', encoding='utf-8') as f:
+    export_path_json = os.path.join(EXPORTS_DIR, f"exception_list_{box_code}.json")
+    with open(export_path_json, 'w', encoding='utf-8') as f:
         json.dump(result.model_dump(), f, ensure_ascii=False, indent=2, default=str)
+    
+    export_path_csv = os.path.join(EXPORTS_DIR, f"exception_list_{box_code}.csv")
+    _write_exception_list_csv(export_path_csv, result)
 
     return result
+
+
+def _write_exception_list_csv(file_path: str, result: ExceptionListResponse):
+    """生成异常清单 CSV 文件，使用与 JSON 相同的数据"""
+    result_dict = result.model_dump()
+    
+    with open(file_path, 'w', encoding='utf-8-sig', newline='') as f:
+        writer = csv.writer(f)
+        
+        writer.writerow(["异常清单信息", ""])
+        writer.writerow(["箱号", result_dict.get("box_code", "")])
+        writer.writerow(["生成时间", str(result_dict.get("generated_at", ""))])
+        writer.writerow(["异常总数", result_dict.get("total_exceptions", "")])
+        writer.writerow([])
+        
+        writer.writerow(["异常明细", "", "", "", "", ""])
+        writer.writerow(["序号", "异常类型", "样本条码", "温度", "记录索引", "异常信息"])
+        exceptions = result_dict.get("exceptions", [])
+        for i, exc in enumerate(exceptions, 1):
+            writer.writerow([
+                i,
+                exc.get("type", ""),
+                exc.get("barcode", ""),
+                exc.get("temperature", ""),
+                exc.get("record_index", ""),
+                exc.get("message", exc.get("reason", ""))
+            ])
+        writer.writerow([])
+        
+        revoked_history = result_dict.get("revoked_transfer_history") or []
+        if revoked_history:
+            writer.writerow(["撤回历史", "", "", "", "", ""])
+            writer.writerow(["序号", "交接ID", "起点", "终点", "交出人", "接收人", "交接时间", "撤回时间", "撤回人", "撤回原因"])
+            for i, rh in enumerate(revoked_history, 1):
+                writer.writerow([
+                    i,
+                    rh.get("transfer_id", ""),
+                    rh.get("from_point", ""),
+                    rh.get("to_point", ""),
+                    rh.get("from_custodian", ""),
+                    rh.get("to_custodian", ""),
+                    rh.get("transfer_time", ""),
+                    rh.get("revoked_at", ""),
+                    rh.get("revoked_by", ""),
+                    rh.get("revoke_reason", "")
+                ])

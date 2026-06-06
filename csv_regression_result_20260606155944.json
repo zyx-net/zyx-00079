@@ -1,0 +1,15 @@
+{
+  "test_time": "2026-06-06T16:01:29.110624",
+  "total_tests": 7,
+  "passed_tests": 5,
+  "all_passed": false,
+  "results": {
+    "场景1: 正常交接 - JSON/CSV 数据一致": true,
+    "场景2: 撤回后重新交接 - 起点正确": true,
+    "场景3: 多份样本 - 样本清单正确": true,
+    "场景4: 有撤回历史 - 撤回历史正确": true,
+    "场景5: 无交接记录 - 使用箱子信息": true,
+    "场景6: 异常清单导出 - JSON/CSV 一致": false,
+    "场景7: API 文档包含 CSV 说明": false
+  }
+}

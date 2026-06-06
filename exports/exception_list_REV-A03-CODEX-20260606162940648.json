@@ -1,0 +1,30 @@
+{
+  "box_code": "REV-A03-CODEX-20260606162940648",
+  "exceptions": [
+    {
+      "type": "TRANSFER_REVOKED",
+      "transfer_id": 187,
+      "revoked_at": "2026-06-06T08:29:40.938574",
+      "revoked_by": "Dr Beta",
+      "revoke_reason": "reviewer corrected destination before acceptance",
+      "message": "交接记录已被撤回: reviewer corrected destination before acceptance"
+    }
+  ],
+  "generated_at": "2026-06-06 08:29:41.002142+00:00",
+  "total_exceptions": 1,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 187,
+      "from_point": "CP-CODEX",
+      "to_point": "TP-WRONG",
+      "from_custodian": "Dr Alpha",
+      "to_custodian": "Dr Beta",
+      "transfer_time": "2026-06-06T08:29:40.886540",
+      "temperature": 4.2,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T08:29:40.938574",
+      "revoked_by": "Dr Beta",
+      "revoke_reason": "reviewer corrected destination before acceptance"
+    }
+  ]
+}

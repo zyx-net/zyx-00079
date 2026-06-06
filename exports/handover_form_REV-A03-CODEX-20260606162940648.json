@@ -1,0 +1,46 @@
+{
+  "box_code": "REV-A03-CODEX-20260606162940648",
+  "transfer_id": 188,
+  "from_point": "CP-CODEX",
+  "to_point": "TP-FINAL",
+  "from_custodian": "Dr Alpha",
+  "to_custodian": "Dr Gamma",
+  "transfer_time": "2026-06-06 08:29:40.957317",
+  "samples": [
+    {
+      "barcode": "S-20260606162940648-A",
+      "sample_type": "blood",
+      "collection_point": "CP-CODEX",
+      "collection_time": "2026-06-06T07:59:40.766330",
+      "status": "DELIVERED"
+    },
+    {
+      "barcode": "S-20260606162940648-B",
+      "sample_type": "blood",
+      "collection_point": "CP-CODEX",
+      "collection_time": "2026-06-06T07:59:40.766330",
+      "status": "DELIVERED"
+    }
+  ],
+  "temperature": 4.3,
+  "rule_version": "v1.0",
+  "is_revoked": false,
+  "revoked_at": null,
+  "revoked_by": null,
+  "revoke_reason": null,
+  "revoked_transfer_history": [
+    {
+      "transfer_id": 187,
+      "from_point": "CP-CODEX",
+      "to_point": "TP-WRONG",
+      "from_custodian": "Dr Alpha",
+      "to_custodian": "Dr Beta",
+      "transfer_time": "2026-06-06T08:29:40.886540",
+      "temperature": 4.2,
+      "rule_version": "v1.0",
+      "revoked_at": "2026-06-06T08:29:40.938574",
+      "revoked_by": "Dr Beta",
+      "revoke_reason": "reviewer corrected destination before acceptance"
+    }
+  ]
+}

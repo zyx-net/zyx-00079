@@ -1,0 +1,23 @@
+﻿交接单信息,
+箱号,REV-A03-CODEX-20260606163024033
+交接ID,190
+起点,CP-CODEX
+终点,TP-FINAL
+交出人,Dr Alpha
+接收人,Dr Gamma
+交接时间,2026-06-06 08:30:24.267844
+交接温度,4.3
+规则版本,v1.0
+是否已撤回,False
+撤回时间,None
+撤回人,
+撤回原因,
+
+样本清单,,,,
+序号,样本条码,样本类型,采集点,采集时间,状态
+1,S-20260606163024033-A,blood,CP-CODEX,2026-06-06T08:00:24.104742,DELIVERED
+2,S-20260606163024033-B,blood,CP-CODEX,2026-06-06T08:00:24.104742,DELIVERED
+
+撤回历史,,,,,
+序号,交接ID,起点,终点,交出人,接收人,交接时间,撤回时间,撤回人,撤回原因
+1,189,CP-CODEX,TP-WRONG,Dr Alpha,Dr Beta,2026-06-06T08:30:24.191826,2026-06-06T08:30:24.250795,Dr Beta,reviewer corrected destination before acceptance

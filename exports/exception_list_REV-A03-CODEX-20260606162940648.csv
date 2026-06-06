@@ -1,0 +1,12 @@
+﻿异常清单信息,
+箱号,REV-A03-CODEX-20260606162940648
+生成时间,2026-06-06 08:29:41.002142+00:00
+异常总数,1
+
+异常明细,,,,,
+序号,异常类型,样本条码,温度,记录索引,异常信息
+1,TRANSFER_REVOKED,,,,交接记录已被撤回: reviewer corrected destination before acceptance
+
+撤回历史,,,,,
+序号,交接ID,起点,终点,交出人,接收人,交接时间,撤回时间,撤回人,撤回原因
+1,187,CP-CODEX,TP-WRONG,Dr Alpha,Dr Beta,2026-06-06T08:29:40.886540,2026-06-06T08:29:40.938574,Dr Beta,reviewer corrected destination before acceptance
