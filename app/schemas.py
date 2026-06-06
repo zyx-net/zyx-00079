@@ -212,3 +212,37 @@ class ExceptionListResponse(BaseModel):
     generated_at: datetime
     total_exceptions: int
     revoked_transfer_history: Optional[List[Dict[str, Any]]] = None
+
+
+class BatchTransferItem(BaseModel):
+    box_code: str = Field(..., description="箱号")
+    to_point: str = Field(..., description="接收点")
+    to_custodian: str = Field(..., description="接收人")
+    from_custodian: str = Field(..., description="交出人")
+    temperature: Optional[float] = Field(None, description="交接时温度")
+    transfer_time: datetime = Field(..., description="交接时间")
+    temperature_records: Optional[str] = Field(None, description="温度记录（JSON格式数组）")
+
+
+class BatchImportRequest(BaseModel):
+    transfers: List[BatchTransferItem] = Field(..., description="批量交接记录列表")
+    import_note: Optional[str] = Field(None, description="导入备注")
+
+
+class BatchImportError(BaseModel):
+    index: int
+    box_code: str
+    error: str
+    code: str
+    details: Optional[Dict[str, Any]] = None
+
+
+class BatchImportResponse(BaseModel):
+    success: bool
+    total_count: int
+    success_count: int
+    failed_count: int
+    imported_transfers: List[TransferResponse]
+    errors: List[BatchImportError]
+    import_time: datetime
+    rule_version: str

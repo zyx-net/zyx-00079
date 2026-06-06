@@ -754,6 +754,155 @@ CREATED → BOXED → SEALED → IN_TRANSIT → DELIVERED → TESTING → COMPLE
 
 ---
 
+### POST /api/boxes/batch-import
+批量导入交接记录（JSON格式）
+
+**功能说明**：
+批量导入交接记录，支持现场人员把补录或更正后的交接信息一次性导入服务。
+所有记录逐条校验，只要有一条失败，所有记录都不会写入数据库（原子性）。
+导入成功后，数据会同步到交接历史、交接单导出、异常清单和审计日志，跨服务重启后仍然保留。
+
+**请求体**:
+```json
+{
+  "transfers": [
+    {
+      "box_code": "BOX-2026-0001",
+      "to_point": "TP001",
+      "to_custodian": "Dr. Li",
+      "from_custodian": "Dr. Zhang",
+      "temperature": 5.0,
+      "transfer_time": "2026-06-06T08:30:00",
+      "temperature_records": "[{\"temperature\": 4.5, \"timestamp\": \"2026-06-06T08:00:00\"}]"
+    },
+    {
+      "box_code": "BOX-2026-0002",
+      "to_point": "TP002",
+      "to_custodian": "Dr. Wang",
+      "from_custodian": "Dr. Zhang",
+      "temperature": 4.0,
+      "transfer_time": "2026-06-06T09:00:00",
+      "temperature_records": null
+    }
+  ],
+  "import_note": "2026-06-06 补录交接记录"
+}
+```
+
+**校验规则**：
+- 箱号必须存在且状态为 `SEALED` 或 `IN_TRANSIT`
+- 交出人必须是当前保管人
+- 接收人、接收点不能为空
+- 温度必须符合样本类型的温控规则
+- 交接时间不能晚于当前时间
+- 同一箱子不能在同一批次中连续导入
+- 同一时间点不能有重复交接记录
+- 箱内有已隔离样本时不能交接
+- 接收点不能与起点相同
+
+**成功响应** (200 - 全部成功):
+```json
+{
+  "success": true,
+  "total_count": 2,
+  "success_count": 2,
+  "failed_count": 0,
+  "imported_transfers": [
+    {
+      "transfer_id": 1,
+      "box_code": "BOX-2026-0001",
+      "from_point": "CP001",
+      "to_point": "TP001",
+      "from_custodian": "Dr. Zhang",
+      "to_custodian": "Dr. Li",
+      "transfer_time": "2026-06-06T08:30:00",
+      "status": "IN_TRANSIT",
+      "temperature": 5.0,
+      "rule_version": "v1.0"
+    }
+  ],
+  "errors": [],
+  "import_time": "2026-06-06T10:00:00",
+  "rule_version": "v1.0"
+}
+```
+
+**失败响应** (200 - 部分失败，原子性回滚):
+```json
+{
+  "success": false,
+  "total_count": 2,
+  "success_count": 0,
+  "failed_count": 1,
+  "imported_transfers": [],
+  "errors": [
+    {
+      "index": 1,
+      "box_code": "NONEXISTENT-BOX",
+      "error": "转运箱 NONEXISTENT-BOX 不存在",
+      "code": "BOX_NOT_FOUND",
+      "details": {}
+    }
+  ],
+  "import_time": "2026-06-06T10:00:00",
+  "rule_version": "v1.0"
+}
+```
+
+**curl示例**:
+```bash
+curl -X POST "http://localhost:8000/api/boxes/batch-import" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "transfers": [
+      {
+        "box_code": "BOX-2026-0001",
+        "to_point": "TP001",
+        "to_custodian": "Dr. Li",
+        "from_custodian": "Dr. Zhang",
+        "temperature": 5.0,
+        "transfer_time": "2026-06-06T08:30:00"
+      }
+    ],
+    "import_note": "补录交接"
+  }'
+```
+
+---
+
+### POST /api/boxes/batch-import/csv
+批量导入交接记录（CSV格式）
+
+**功能说明**：
+与JSON格式接口功能相同，但接受CSV格式输入。适合现场人员使用Excel导出后直接导入。
+
+**CSV格式要求**（表头必须包含）：
+```
+box_code,to_point,to_custodian,from_custodian,temperature,transfer_time,temperature_records
+BOX-2026-0001,TP001,Dr. Li,Dr. Zhang,5.0,2026-06-06T08:30:00,"[{""temperature"": 4.5, ""timestamp"": ""2026-06-06T08:00:00""}]"
+BOX-2026-0002,TP002,Dr. Wang,Dr. Zhang,4.0,2026-06-06T09:00:00,
+```
+
+**字段说明**：
+- `box_code`: 箱号（必填）
+- `to_point`: 接收点（必填）
+- `to_custodian`: 接收人（必填）
+- `from_custodian`: 交出人（必填）
+- `temperature`: 交接时温度（可选）
+- `transfer_time`: 交接时间，ISO格式（必填）
+- `temperature_records`: 温度记录，JSON数组（可选）
+
+**curl示例**:
+```bash
+curl -X POST "http://localhost:8000/api/boxes/batch-import/csv?import_note=补录交接" \
+  -H "Content-Type: text/csv; charset=utf-8" \
+  --data-binary @transfers.csv
+```
+
+**响应格式**：与JSON格式接口相同
+
+---
+
 ## 5. 审计日志接口
 
 ### GET /api/audit
@@ -874,8 +1023,10 @@ CREATED → BOXED → SEALED → IN_TRANSIT → DELIVERED → TESTING → COMPLE
    应返回该样本的完整审计追踪
 
 5. **导出文件**:
-   - `exports/handover_form_*.json` - 交接单
-   - `exports/exception_list_*.json` - 异常清单
+   - `exports/handover_form_*.json` - 交接单 (JSON)
+   - `exports/handover_form_*.csv` - 交接单 (CSV)
+   - `exports/exception_list_*.json` - 异常清单 (JSON)
+   - `exports/exception_list_*.csv` - 异常清单 (CSV)
 
 ---
 

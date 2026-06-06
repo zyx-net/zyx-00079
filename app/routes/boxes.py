@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timezone
@@ -16,7 +16,11 @@ from ..schemas import (
     AcceptanceRequest,
     HandoverFormResponse,
     ExceptionListResponse,
-    ErrorResponse
+    ErrorResponse,
+    BatchTransferItem,
+    BatchImportRequest,
+    BatchImportResponse,
+    BatchImportError
 )
 from ..config_manager import config_manager
 from ..audit import audit_logger
@@ -1222,3 +1226,501 @@ def _write_exception_list_csv(file_path: str, result: ExceptionListResponse):
                     rh.get("revoked_by", ""),
                     rh.get("revoke_reason", "")
                 ])
+
+
+def _validate_single_transfer(
+    db: Session,
+    item: BatchTransferItem,
+    index: int,
+    processed_boxes: dict
+) -> tuple[bool, BatchImportError | None, Box | None]:
+    rule_version = config_manager.get_current_version()
+    if not rule_version:
+        return False, BatchImportError(
+            index=index,
+            box_code=item.box_code,
+            error="系统配置未加载，请先加载规则配置",
+            code="CONFIG_NOT_LOADED"
+        ), None
+
+    box = db.query(Box).filter(Box.box_code == item.box_code).with_for_update().first()
+    if not box:
+        return False, BatchImportError(
+            index=index,
+            box_code=item.box_code,
+            error=f"转运箱 {item.box_code} 不存在",
+            code="BOX_NOT_FOUND"
+        ), None
+
+    if box.status not in ["SEALED", "IN_TRANSIT"]:
+        return False, BatchImportError(
+            index=index,
+            box_code=item.box_code,
+            error=f"转运箱状态为 {box.status}，必须先封箱(SEALED)才能交接",
+            code="BOX_NOT_SEALED",
+            details={"box_status": box.status}
+        ), None
+
+    if box.current_custodian != item.from_custodian:
+        return False, BatchImportError(
+            index=index,
+            box_code=item.box_code,
+            error=f"当前保管人是 {box.current_custodian}，{item.from_custodian} 不是当前保管人，无权提交交接",
+            code="INVALID_CUSTODIAN",
+            details={
+                "current_custodian": box.current_custodian,
+                "from_custodian": item.from_custodian
+            }
+        ), None
+
+    for sample in box.samples:
+        if sample.is_isolated or sample.status == "ISOLATED":
+            return False, BatchImportError(
+                index=index,
+                box_code=item.box_code,
+                error=f"箱内样本 {sample.barcode} 已隔离，不能继续流转",
+                code="SAMPLE_ISOLATED",
+                details={"barcode": sample.barcode, "isolation_reason": sample.isolation_reason}
+            ), None
+
+    if item.temperature_records:
+        sample_type = box.samples[0].sample_type if box.samples else "blood"
+        is_valid, errors = config_manager.validate_temperature_records(
+            item.temperature_records, sample_type
+        )
+        if not is_valid:
+            return False, BatchImportError(
+                index=index,
+                box_code=item.box_code,
+                error="温度记录格式错误",
+                code="INVALID_TEMPERATURE_FORMAT",
+                details={"errors": errors}
+            ), None
+
+    if item.temperature is not None and box.samples:
+        temp_validations = []
+        for sample in box.samples:
+            is_ok, msg = config_manager.check_temperature(sample.sample_type, item.temperature)
+            if not is_ok:
+                temp_validations.append({"barcode": sample.barcode, "message": msg})
+
+        if temp_validations:
+            return False, BatchImportError(
+                index=index,
+                box_code=item.box_code,
+                error="温度超出允许范围",
+                code="TEMPERATURE_VIOLATION",
+                details={"violations": temp_validations}
+            ), None
+
+    if item.transfer_time > datetime.now(timezone.utc):
+        return False, BatchImportError(
+            index=index,
+            box_code=item.box_code,
+            error="交接时间不能晚于当前时间",
+            code="INVALID_TRANSFER_TIME",
+            details={"transfer_time": item.transfer_time.isoformat()}
+        ), None
+
+    all_transfers = db.query(TransferRecord).filter(
+        TransferRecord.box_id == box.id
+    ).order_by(TransferRecord.transfer_time.desc()).all()
+
+    last_active_transfer = None
+    for t in all_transfers:
+        if not t.is_revoked:
+            last_active_transfer = t
+            break
+
+    if last_active_transfer:
+        from_point = last_active_transfer.to_point
+        expected_from_custodian = last_active_transfer.to_custodian
+    else:
+        from_point = box.samples[0].collection_point if box.samples else "UNKNOWN"
+        expected_from_custodian = box.current_custodian
+
+    if item.from_custodian != expected_from_custodian:
+        return False, BatchImportError(
+            index=index,
+            box_code=item.box_code,
+            error=f"交接起始保管人错误，应为 {expected_from_custodian}，不是 {item.from_custodian}",
+            code="INVALID_CUSTODIAN",
+            details={
+                "expected_from_custodian": expected_from_custodian,
+                "actual_from_custodian": item.from_custodian,
+                "has_active_transfer": last_active_transfer is not None,
+                "from_point": from_point
+            }
+        ), None
+
+    if item.box_code in processed_boxes:
+        return False, BatchImportError(
+            index=index,
+            box_code=item.box_code,
+            error=f"同一箱子 {item.box_code} 在本次批量导入中已存在交接记录，不能连续导入",
+            code="DUPLICATE_BOX_IN_BATCH",
+            details={"previous_index": processed_boxes[item.box_code]}
+        ), None
+
+    existing_same_time = db.query(TransferRecord).filter(
+        TransferRecord.box_id == box.id,
+        TransferRecord.transfer_time == item.transfer_time,
+        TransferRecord.is_revoked == False
+    ).first()
+    if existing_same_time:
+        return False, BatchImportError(
+            index=index,
+            box_code=item.box_code,
+            error=f"该箱子在 {item.transfer_time.isoformat()} 已有交接记录，不能重复交接",
+            code="DUPLICATE_TRANSFER",
+            details={"existing_transfer_id": existing_same_time.id}
+        ), None
+
+    for sample in box.samples:
+        status_flow = config_manager.get_current_config().get("status_flow", {}) if config_manager.get_current_config() else {}
+        if sample.status in status_flow:
+            if not config_manager.can_transition_status(sample.status, "IN_TRANSIT"):
+                return False, BatchImportError(
+                    index=index,
+                    box_code=item.box_code,
+                    error=f"样本 {sample.barcode} 状态 {sample.status} 不能转为IN_TRANSIT，配置规则不匹配",
+                    code="INVALID_STATUS_TRANSITION",
+                    details={"barcode": sample.barcode, "current_status": sample.status}
+                ), None
+
+    if item.to_point == from_point:
+        return False, BatchImportError(
+            index=index,
+            box_code=item.box_code,
+            error=f"接收点 {item.to_point} 不能与起点 {from_point} 相同",
+            code="INVALID_TO_POINT",
+            details={"from_point": from_point, "to_point": item.to_point}
+        ), None
+
+    return True, None, box
+
+
+def _process_single_transfer(
+    db: Session,
+    item: BatchTransferItem,
+    box: Box,
+    rule_version: str,
+    import_note: str = None
+) -> TransferResponse:
+    all_transfers = db.query(TransferRecord).filter(
+        TransferRecord.box_id == box.id
+    ).order_by(TransferRecord.transfer_time.desc()).all()
+
+    last_active_transfer = None
+    for t in all_transfers:
+        if not t.is_revoked:
+            last_active_transfer = t
+            break
+
+    if last_active_transfer:
+        from_point = last_active_transfer.to_point
+    else:
+        from_point = box.samples[0].collection_point if box.samples else "UNKNOWN"
+
+    transfer = TransferRecord(
+        box_id=box.id,
+        from_point=from_point,
+        to_point=item.to_point,
+        from_custodian=item.from_custodian,
+        to_custodian=item.to_custodian,
+        transfer_time=item.transfer_time,
+        status="IN_TRANSIT",
+        temperature=item.temperature,
+        rule_version=rule_version
+    )
+    db.add(transfer)
+    db.flush()
+
+    old_box_status = box.status
+    box.status = "IN_TRANSIT"
+    box.current_custodian = item.to_custodian
+    if item.temperature_records:
+        box.temperature_records = item.temperature_records
+
+    for sample in box.samples:
+        old_sample_status = sample.status
+        sample.status = "IN_TRANSIT"
+        sample.current_custodian = item.to_custodian
+        audit_logger.log_sample_status_change(
+            db, sample, old_sample_status, "IN_TRANSIT", item.to_custodian, "BATCH_IMPORT_TRANSFER"
+        )
+
+    audit_logger.log_box_status_change(
+        db, box, old_box_status, "IN_TRANSIT", item.to_custodian, "BATCH_IMPORT_TRANSFER",
+        details={"import_note": import_note} if import_note else None
+    )
+    audit_logger.log_transfer(db, transfer, item.from_custodian, details={"imported": True, "import_note": import_note})
+
+    if any(t.is_revoked for t in all_transfers):
+        revoked_count = len([t for t in all_transfers if t.is_revoked])
+        prev_id = last_active_transfer.id if last_active_transfer else None
+        audit_logger.log_re_transfer(
+            db, transfer, item.from_custodian,
+            prev_transfer_id=prev_id,
+            revoked_count=revoked_count
+        )
+
+    return TransferResponse(
+        transfer_id=transfer.id,
+        box_code=box.box_code,
+        from_point=transfer.from_point,
+        to_point=transfer.to_point,
+        from_custodian=transfer.from_custodian,
+        to_custodian=transfer.to_custodian,
+        transfer_time=transfer.transfer_time,
+        status=transfer.status,
+        temperature=transfer.temperature,
+        rule_version=transfer.rule_version
+    )
+
+
+@router.post(
+    "/batch-import",
+    response_model=BatchImportResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "请求参数错误"},
+        500: {"model": ErrorResponse, "description": "服务器错误"}
+    },
+    summary="批量导入交接记录（JSON格式）"
+)
+def batch_import_transfers(request: BatchImportRequest, db: Session = Depends(get_db)):
+    """
+    批量导入交接记录，支持补录或更正后的交接信息一次性导入。
+
+    - **transfers**: 批量交接记录列表
+    - **import_note**: 导入备注（可选）
+
+    校验规则：
+    - 箱号必须存在且状态为 SEALED 或 IN_TRANSIT
+    - 交出人必须是当前保管人
+    - 接收人、接收点不能为空
+    - 温度必须符合样本类型的温控规则
+    - 交接时间不能晚于当前时间
+    - 同一箱子不能在同一批次中连续导入
+    - 同一时间点不能有重复交接记录
+    - 样本状态流转必须符合配置规则
+    - 箱内有已隔离样本时不能交接
+
+    错误处理：
+    - 所有校验失败的记录都会返回详细错误信息
+    - 只要有一条记录校验失败，所有记录都不会写入数据库（原子性）
+
+    导入成功后，数据会同步到：
+    - 交接历史
+    - 交接单导出
+    - 异常清单
+    - 审计日志
+    """
+    rule_version = config_manager.get_current_version()
+    if not rule_version:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "系统配置未加载，请先加载规则配置",
+                "code": "CONFIG_NOT_LOADED"
+            }
+        )
+
+    errors: List[BatchImportError] = []
+    processed_boxes: dict = {}
+
+    for idx, item in enumerate(request.transfers):
+        is_valid, error, box = _validate_single_transfer(db, item, idx, processed_boxes)
+        if not is_valid and error:
+            errors.append(error)
+        else:
+            processed_boxes[item.box_code] = idx
+
+    if errors:
+        db.rollback()
+        return BatchImportResponse(
+            success=False,
+            total_count=len(request.transfers),
+            success_count=0,
+            failed_count=len(errors),
+            imported_transfers=[],
+            errors=errors,
+            import_time=datetime.now(timezone.utc),
+            rule_version=rule_version
+        )
+
+    imported_transfers: List[TransferResponse] = []
+    processed_boxes.clear()
+
+    try:
+        for idx, item in enumerate(request.transfers):
+            is_valid, error, box = _validate_single_transfer(db, item, idx, processed_boxes)
+            if is_valid and box:
+                transfer_resp = _process_single_transfer(db, item, box, rule_version, request.import_note)
+                imported_transfers.append(transfer_resp)
+                processed_boxes[item.box_code] = idx
+
+        db.commit()
+
+        return BatchImportResponse(
+            success=True,
+            total_count=len(request.transfers),
+            success_count=len(imported_transfers),
+            failed_count=0,
+            imported_transfers=imported_transfers,
+            errors=[],
+            import_time=datetime.now(timezone.utc),
+            rule_version=rule_version
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": f"批量导入失败: {str(e)}",
+                "code": "BATCH_IMPORT_ERROR"
+            }
+        )
+
+
+@router.post(
+    "/batch-import/csv",
+    response_model=BatchImportResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "请求参数错误"},
+        500: {"model": ErrorResponse, "description": "服务器错误"}
+    },
+    summary="批量导入交接记录（CSV格式）"
+)
+async def batch_import_transfers_csv(
+    request: Request,
+    import_note: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    批量导入交接记录，支持CSV格式。
+
+    CSV文件格式要求（表头必须包含）：
+    - box_code: 箱号
+    - to_point: 接收点
+    - to_custodian: 接收人
+    - from_custodian: 交出人
+    - temperature: 交接时温度（可选）
+    - transfer_time: 交接时间（ISO格式，如 2026-06-06T08:30:00）
+    - temperature_records: 温度记录（JSON格式数组，可选）
+
+    示例CSV内容：
+    ```
+    box_code,to_point,to_custodian,from_custodian,temperature,transfer_time,temperature_records
+    BOX-2026-0001,TP001,Dr. Li,Dr. Zhang,5.0,2026-06-06T08:30:00,"[{""temperature"": 4.5, ""timestamp"": ""2026-06-06T08:00:00""}]"
+    BOX-2026-0002,TP002,Dr. Wang,Dr. Zhang,4.0,2026-06-06T09:00:00,
+    ```
+
+    校验规则和错误处理与JSON格式接口相同。
+    """
+    import io
+
+    rule_version = config_manager.get_current_version()
+    if not rule_version:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "系统配置未加载，请先加载规则配置",
+                "code": "CONFIG_NOT_LOADED"
+            }
+        )
+
+    try:
+        body = await request.body()
+        csv_content = body.decode('utf-8-sig')
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": f"CSV解析失败: {str(e)}",
+                "code": "CSV_PARSE_ERROR"
+            }
+        )
+
+    try:
+        reader = csv.DictReader(io.StringIO(csv_content))
+        required_fields = ['box_code', 'to_point', 'to_custodian', 'from_custodian', 'transfer_time']
+        missing_fields = [f for f in required_fields if f not in reader.fieldnames]
+        if missing_fields:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": f"CSV缺少必要字段: {', '.join(missing_fields)}",
+                    "code": "CSV_MISSING_FIELDS",
+                    "details": {"missing_fields": missing_fields, "available_fields": reader.fieldnames}
+                }
+            )
+
+        transfers: List[BatchTransferItem] = []
+        parse_errors: List[BatchImportError] = []
+
+        for idx, row in enumerate(reader):
+            try:
+                temp_str = row.get('temperature', '').strip()
+                temperature = float(temp_str) if temp_str else None
+
+                transfer_time_str = row.get('transfer_time', '').strip()
+                if not transfer_time_str:
+                    raise ValueError("transfer_time不能为空")
+
+                transfer_time = datetime.fromisoformat(transfer_time_str.replace('Z', '+00:00'))
+                if transfer_time.tzinfo is None:
+                    transfer_time = transfer_time.replace(tzinfo=timezone.utc)
+
+                temp_records = row.get('temperature_records', '').strip()
+                if temp_records == '':
+                    temp_records = None
+
+                item = BatchTransferItem(
+                    box_code=row['box_code'].strip(),
+                    to_point=row['to_point'].strip(),
+                    to_custodian=row['to_custodian'].strip(),
+                    from_custodian=row['from_custodian'].strip(),
+                    temperature=temperature,
+                    transfer_time=transfer_time,
+                    temperature_records=temp_records
+                )
+                transfers.append(item)
+            except Exception as e:
+                parse_errors.append(BatchImportError(
+                    index=idx,
+                    box_code=row.get('box_code', 'UNKNOWN'),
+                    error=f"CSV行解析失败: {str(e)}",
+                    code="CSV_ROW_PARSE_ERROR",
+                    details={"row": row, "error": str(e)}
+                ))
+
+        if parse_errors:
+            return BatchImportResponse(
+                success=False,
+                total_count=len(transfers) + len(parse_errors),
+                success_count=0,
+                failed_count=len(parse_errors),
+                imported_transfers=[],
+                errors=parse_errors,
+                import_time=datetime.now(timezone.utc),
+                rule_version=rule_version
+            )
+
+        batch_request = BatchImportRequest(
+            transfers=transfers,
+            import_note=import_note
+        )
+
+        return batch_import_transfers(batch_request, db)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": f"CSV处理失败: {str(e)}",
+                "code": "CSV_PROCESS_ERROR"
+            }
+        )

@@ -1,0 +1,10 @@
+{
+  "test_time": "2026-06-06T16:58:10.322610",
+  "all_passed": true,
+  "tests": [
+    "test_successful_import",
+    "test_partial_failure",
+    "test_restart_persistence",
+    "test_csv_import"
+  ]
+}
