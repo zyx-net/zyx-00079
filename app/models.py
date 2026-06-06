@@ -56,6 +56,7 @@ class Box(Base):
 
     samples = relationship("Sample", back_populates="box")
     transfer_records = relationship("TransferRecord", back_populates="box")
+    work_orders = relationship("ExceptionWorkOrder", back_populates="box")
 
 
 class TransferRecord(Base):
@@ -80,6 +81,7 @@ class TransferRecord(Base):
 
     sample = relationship("Sample", back_populates="transfer_records")
     box = relationship("Box", back_populates="transfer_records")
+    work_orders = relationship("ExceptionWorkOrder", back_populates="transfer_record")
 
 
 class AuditLog(Base):
@@ -95,3 +97,60 @@ class AuditLog(Base):
     rule_version = Column(String(50), nullable=False)
     details = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class WorkOrderRuleVersion(Base):
+    __tablename__ = "work_order_rule_versions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    version = Column(String(50), unique=True, nullable=False)
+    rule_file_path = Column(String(255), nullable=False)
+    loaded_at = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+    config_content = Column(Text, nullable=False)
+
+
+class ExceptionWorkOrder(Base):
+    __tablename__ = "exception_work_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    work_order_no = Column(String(50), unique=True, nullable=False, index=True)
+    exception_type = Column(String(50), nullable=False)
+    severity = Column(String(20), nullable=False)
+    box_code = Column(String(100), nullable=False, index=True)
+    box_id = Column(Integer, ForeignKey("boxes.id"), nullable=True)
+    transfer_record_id = Column(Integer, ForeignKey("transfer_records.id"), nullable=True)
+    site_code = Column(String(50), nullable=False, index=True)
+    reported_by = Column(String(100), nullable=False)
+    reported_at = Column(DateTime, default=datetime.utcnow)
+    description = Column(Text, nullable=False)
+    status = Column(String(50), nullable=False, default="OPEN")
+    assignee = Column(String(100), nullable=True)
+    assigned_at = Column(DateTime, nullable=True)
+    closed_at = Column(DateTime, nullable=True)
+    closed_by = Column(String(100), nullable=True)
+    close_reason = Column(String(255), nullable=True)
+    is_revoked = Column(Boolean, default=False)
+    revoked_at = Column(DateTime, nullable=True)
+    revoked_by = Column(String(100), nullable=True)
+    revoke_reason = Column(String(255), nullable=True)
+    rule_version = Column(String(50), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    box = relationship("Box", back_populates="work_orders")
+    transfer_record = relationship("TransferRecord", back_populates="work_orders")
+    process_records = relationship("WorkOrderProcessRecord", back_populates="work_order", cascade="all, delete-orphan")
+
+
+class WorkOrderProcessRecord(Base):
+    __tablename__ = "work_order_process_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    work_order_id = Column(Integer, ForeignKey("exception_work_orders.id"), nullable=False)
+    operator = Column(String(100), nullable=False)
+    operation = Column(String(50), nullable=False)
+    remark = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    work_order = relationship("ExceptionWorkOrder", back_populates="process_records")

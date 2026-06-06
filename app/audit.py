@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import Optional, Dict, Any
-from .models import AuditLog, Sample, Box, TransferRecord
+from .models import AuditLog, Sample, Box, TransferRecord, ExceptionWorkOrder, WorkOrderProcessRecord
 from .config_manager import config_manager
+from .work_order_config import work_order_config_manager
 
 
 class AuditLogger:
@@ -311,6 +312,139 @@ class AuditLogger:
         if custodian:
             query = query.filter(AuditLog.custodian == custodian)
         return query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit).all()
+
+    @staticmethod
+    def log_work_order_create(
+        db: Session,
+        work_order: ExceptionWorkOrder,
+        custodian: str,
+        details: Optional[Dict[str, Any]] = None
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="WORK_ORDER",
+            entity_id=work_order.id,
+            action="CREATE",
+            custodian=custodian,
+            old_status=None,
+            new_status=work_order.status,
+            details=details or {
+                "work_order_no": work_order.work_order_no,
+                "exception_type": work_order.exception_type,
+                "severity": work_order.severity,
+                "box_code": work_order.box_code,
+                "site_code": work_order.site_code
+            }
+        )
+
+    @staticmethod
+    def log_work_order_status_change(
+        db: Session,
+        work_order: ExceptionWorkOrder,
+        old_status: str,
+        new_status: str,
+        custodian: str,
+        action: str = "STATUS_CHANGE",
+        details: Optional[Dict[str, Any]] = None
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="WORK_ORDER",
+            entity_id=work_order.id,
+            action=action,
+            custodian=custodian,
+            old_status=old_status,
+            new_status=new_status,
+            details=details or {"work_order_no": work_order.work_order_no}
+        )
+
+    @staticmethod
+    def log_work_order_assign(
+        db: Session,
+        work_order: ExceptionWorkOrder,
+        old_assignee: Optional[str],
+        new_assignee: str,
+        custodian: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="WORK_ORDER",
+            entity_id=work_order.id,
+            action="ASSIGN",
+            custodian=custodian,
+            old_status=work_order.status,
+            new_status="ASSIGNED",
+            details={
+                "work_order_no": work_order.work_order_no,
+                "old_assignee": old_assignee,
+                "new_assignee": new_assignee
+            }
+        )
+
+    @staticmethod
+    def log_work_order_process(
+        db: Session,
+        work_order: ExceptionWorkOrder,
+        process_record: WorkOrderProcessRecord,
+        custodian: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="WORK_ORDER",
+            entity_id=work_order.id,
+            action="PROCESS",
+            custodian=custodian,
+            old_status=work_order.status,
+            new_status="PROCESSING",
+            details={
+                "work_order_no": work_order.work_order_no,
+                "process_record_id": process_record.id,
+                "operation": process_record.operation,
+                "remark": process_record.remark
+            }
+        )
+
+    @staticmethod
+    def log_work_order_close(
+        db: Session,
+        work_order: ExceptionWorkOrder,
+        custodian: str,
+        close_reason: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="WORK_ORDER",
+            entity_id=work_order.id,
+            action="CLOSE",
+            custodian=custodian,
+            old_status=work_order.status,
+            new_status="CLOSED",
+            details={
+                "work_order_no": work_order.work_order_no,
+                "close_reason": close_reason
+            }
+        )
+
+    @staticmethod
+    def log_work_order_revoke_close(
+        db: Session,
+        work_order: ExceptionWorkOrder,
+        custodian: str,
+        revoke_reason: str
+    ) -> AuditLog:
+        return AuditLogger.log(
+            db=db,
+            entity_type="WORK_ORDER",
+            entity_id=work_order.id,
+            action="REVOKE_CLOSE",
+            custodian=custodian,
+            old_status="CLOSED",
+            new_status=work_order.status,
+            details={
+                "work_order_no": work_order.work_order_no,
+                "revoke_reason": revoke_reason
+            }
+        )
 
 
 audit_logger = AuditLogger()

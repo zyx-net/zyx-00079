@@ -1,0 +1,70 @@
+{
+  "version": "wo-v1.0",
+  "description": "交接异常工单规则配置",
+  "exception_types": {
+    "DAMAGED": {
+      "name": "破损",
+      "description": "包装或样本破损"
+    },
+    "TEMPERATURE": {
+      "name": "温控超限",
+      "description": "运输过程温度超出规定范围"
+    },
+    "SIGNATURE_DISPUTE": {
+      "name": "签收争议",
+      "description": "交接时签收存在争议"
+    }
+  },
+  "severity_mapping": {
+    "DAMAGED": {
+      "default": "HIGH",
+      "rules": [
+        {"condition": "样本破损", "severity": "CRITICAL"},
+        {"condition": "包装轻微破损", "severity": "MEDIUM"}
+      ]
+    },
+    "TEMPERATURE": {
+      "default": "HIGH",
+      "rules": [
+        {"condition": "超限时长>2小时", "severity": "CRITICAL"},
+        {"condition": "超限时长>30分钟", "severity": "HIGH"},
+        {"condition": "超限时长<=30分钟", "severity": "MEDIUM"}
+      ]
+    },
+    "SIGNATURE_DISPUTE": {
+      "default": "MEDIUM",
+      "rules": [
+        {"condition": "涉及贵重样本", "severity": "HIGH"}
+      ]
+    }
+  },
+  "severity_levels": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+  "status_flow": {
+    "OPEN": ["ASSIGNED", "PROCESSING", "CLOSED"],
+    "ASSIGNED": ["PROCESSING", "CLOSED"],
+    "PROCESSING": ["CLOSED"],
+    "CLOSED": []
+  },
+  "auto_close_timeout_hours": 72,
+  "revoke_close_limit_hours": 24,
+  "sites": [
+    {"code": "CP001", "name": "门诊采血室", "roles": ["WAREHOUSE", "CUSTOMER_SERVICE"]},
+    {"code": "CP002", "name": "住院部采样点", "roles": ["WAREHOUSE", "CUSTOMER_SERVICE"]},
+    {"code": "CP003", "name": "急诊采样点", "roles": ["WAREHOUSE", "CUSTOMER_SERVICE"]},
+    {"code": "TP001", "name": "中心实验室", "roles": ["WAREHOUSE", "CUSTOMER_SERVICE", "LAB"]},
+    {"code": "TP002", "name": "核酸检测中心", "roles": ["WAREHOUSE", "CUSTOMER_SERVICE", "LAB"]}
+  ],
+  "role_site_permissions": {
+    "WAREHOUSE": ["CP001", "CP002", "CP003", "TP001", "TP002"],
+    "CUSTOMER_SERVICE": ["CP001", "CP002", "CP003", "TP001", "TP002"],
+    "LAB": ["TP001", "TP002"]
+  },
+  "users": {
+    "wh_user1": {"role": "WAREHOUSE", "sites": ["CP001", "TP001"]},
+    "wh_user2": {"role": "WAREHOUSE", "sites": ["CP002", "CP003"]},
+    "cs_user1": {"role": "CUSTOMER_SERVICE", "sites": ["CP001", "CP002", "CP003", "TP001", "TP002"]},
+    "lab_user1": {"role": "LAB", "sites": ["TP001"]},
+    "admin": {"role": "WAREHOUSE", "sites": ["CP001", "CP002", "CP003", "TP001", "TP002"]}
+  },
+  "work_order_no_prefix": "WO"
+}

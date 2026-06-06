@@ -246,3 +246,122 @@ class BatchImportResponse(BaseModel):
     errors: List[BatchImportError]
     import_time: datetime
     rule_version: str
+
+
+class WorkOrderCreate(BaseModel):
+    exception_type: str = Field(..., description="异常类型：DAMAGED（破损）、TEMPERATURE（温控超限）、SIGNATURE_DISPUTE（签收争议）")
+    box_code: str = Field(..., description="关联箱号")
+    transfer_record_id: Optional[int] = Field(None, description="关联交接记录ID")
+    site_code: str = Field(..., description="站点编码")
+    reported_by: str = Field(..., description="上报人")
+    description: str = Field(..., min_length=1, description="异常描述")
+    reported_at: Optional[datetime] = Field(None, description="上报时间，默认当前时间")
+
+
+class WorkOrderProcessRecordResponse(BaseModel):
+    id: int
+    work_order_id: int
+    operator: str
+    operation: str
+    remark: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class WorkOrderResponse(BaseModel):
+    id: int
+    work_order_no: str
+    exception_type: str
+    severity: str
+    box_code: str
+    box_id: Optional[int]
+    transfer_record_id: Optional[int]
+    site_code: str
+    reported_by: str
+    reported_at: datetime
+    description: str
+    status: str
+    assignee: Optional[str]
+    assigned_at: Optional[datetime]
+    closed_at: Optional[datetime]
+    closed_by: Optional[str]
+    close_reason: Optional[str]
+    is_revoked: bool
+    revoked_at: Optional[datetime]
+    revoked_by: Optional[str]
+    revoke_reason: Optional[str]
+    rule_version: str
+    created_at: datetime
+    updated_at: datetime
+    process_records: List[WorkOrderProcessRecordResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
+class WorkOrderAssignRequest(BaseModel):
+    work_order_no: str = Field(..., description="工单号")
+    assignee: str = Field(..., description="处理人")
+    operator: str = Field(..., description="操作人")
+
+
+class WorkOrderProcessRequest(BaseModel):
+    work_order_no: str = Field(..., description="工单号")
+    operation: str = Field(..., description="操作类型")
+    remark: str = Field(..., min_length=1, description="处理备注")
+    operator: str = Field(..., description="操作人")
+
+
+class WorkOrderCloseRequest(BaseModel):
+    work_order_no: str = Field(..., description="工单号")
+    close_reason: str = Field(..., min_length=1, description="关闭原因")
+    operator: str = Field(..., description="操作人")
+
+
+class WorkOrderRevokeCloseRequest(BaseModel):
+    work_order_no: str = Field(..., description="工单号")
+    revoke_reason: str = Field(..., min_length=1, description="撤销原因")
+    operator: str = Field(..., description="操作人")
+
+
+class WorkOrderBatchImportItem(BaseModel):
+    exception_type: str = Field(..., description="异常类型")
+    box_code: str = Field(..., description="关联箱号")
+    transfer_record_id: Optional[int] = Field(None, description="关联交接记录ID")
+    site_code: str = Field(..., description="站点编码")
+    reported_by: str = Field(..., description="上报人")
+    description: str = Field(..., description="异常描述")
+    reported_at: Optional[datetime] = Field(None, description="上报时间")
+
+
+class WorkOrderBatchImportRequest(BaseModel):
+    work_orders: List[WorkOrderBatchImportItem] = Field(..., description="批量工单列表")
+    import_note: Optional[str] = Field(None, description="导入备注")
+
+
+class WorkOrderBatchImportError(BaseModel):
+    index: int
+    box_code: str
+    error: str
+    code: str
+    details: Optional[Dict[str, Any]] = None
+
+
+class WorkOrderBatchImportResponse(BaseModel):
+    success: bool
+    total_count: int
+    success_count: int
+    failed_count: int
+    imported_work_orders: List[WorkOrderResponse]
+    errors: List[WorkOrderBatchImportError]
+    import_time: datetime
+    rule_version: str
+
+
+class WorkOrderExportResponse(BaseModel):
+    file_path: str
+    file_name: str
+    total_count: int
+    exported_at: datetime

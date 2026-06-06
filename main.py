@@ -7,9 +7,10 @@ import os
 import json
 
 from app.database import engine, Base, SessionLocal
-from app.models import ConfigVersion
+from app.models import ConfigVersion, WorkOrderRuleVersion
 from app.config_manager import config_manager, ConfigValidationError
-from app.routes import samples, boxes, config, audit
+from app.work_order_config import work_order_config_manager, WorkOrderConfigValidationError
+from app.routes import samples, boxes, config, audit, work_orders
 
 
 @asynccontextmanager
@@ -26,11 +27,26 @@ async def lifespan(app: FastAPI):
                 config_manager._current_config = config_data
                 config_manager._current_version = active_config.version
                 config_manager._config_file_path = active_config.rule_file_path
-                print(f"[STARTUP] 已恢复配置版本: {active_config.version}")
+                print(f"[STARTUP] 已恢复转运规则配置版本: {active_config.version}")
             except Exception as e:
-                print(f"[STARTUP] 恢复配置失败: {e}")
+                print(f"[STARTUP] 恢复转运规则配置失败: {e}")
         else:
-            print("[STARTUP] 无活动配置，请通过API加载规则配置")
+            print("[STARTUP] 无活动转运规则配置，请通过API加载规则配置")
+
+        active_wo_config = db.query(WorkOrderRuleVersion).filter(WorkOrderRuleVersion.is_active == True).first()
+        if active_wo_config and os.path.exists(active_wo_config.rule_file_path):
+            try:
+                with open(active_wo_config.rule_file_path, 'r', encoding='utf-8') as f:
+                    wo_config_content = f.read()
+                wo_config_data = json.loads(wo_config_content)
+                work_order_config_manager._current_config = wo_config_data
+                work_order_config_manager._current_version = active_wo_config.version
+                work_order_config_manager._config_file_path = active_wo_config.rule_file_path
+                print(f"[STARTUP] 已恢复工单规则配置版本: {active_wo_config.version}")
+            except Exception as e:
+                print(f"[STARTUP] 恢复工单规则配置失败: {e}")
+        else:
+            print("[STARTUP] 无活动工单规则配置，请通过API加载工单规则配置")
     finally:
         db.close()
 
@@ -96,10 +112,23 @@ async def config_validation_exception_handler(request: Request, exc: ConfigValid
     )
 
 
+@app.exception_handler(WorkOrderConfigValidationError)
+async def work_order_config_validation_exception_handler(request: Request, exc: WorkOrderConfigValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={
+            "error": exc.message,
+            "code": exc.error_code,
+            "details": exc.details
+        }
+    )
+
+
 app.include_router(config.router)
 app.include_router(samples.router)
 app.include_router(boxes.router)
 app.include_router(audit.router)
+app.include_router(work_orders.router)
 
 
 @app.get("/", tags=["system"])
